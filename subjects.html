@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จัดการรายวิชา - โรงเรียนบ้านละลม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.5.0/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Sarabun', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <div class="max-w-2xl mx-auto p-4">
+
+    <a href="admin.html" class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 mb-3">
+      <i class="ti ti-arrow-left"></i> กลับ Dashboard
+    </a>
+
+    <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+
+      <!-- Header -->
+      <div class="bg-gradient-to-br from-[#042C53] to-[#185FA5] p-4 text-white">
+        <p class="text-base font-medium">จัดการรายวิชา</p>
+        <p class="text-xs text-blue-200 mt-1">เพิ่ม แก้ไข ลบ รายวิชาที่สอน</p>
+      </div>
+
+      <!-- ฟอร์มเพิ่มวิชา -->
+      <div class="p-4 bg-slate-50 border-b border-slate-100">
+        <p id="formTitle" class="text-xs font-medium text-[#185FA5] mb-3"><i class="ti ti-plus"></i> เพิ่มวิชาใหม่</p>
+
+        <div id="formError" class="hidden mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"></div>
+
+        <div class="grid grid-cols-3 gap-2 mb-2">
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">รหัสวิชา</label>
+            <input type="text" id="subjectId" placeholder="ค21201 / ACT-01" class="w-full h-9 px-2 text-xs border border-slate-200 rounded focus:border-[#185FA5] outline-none font-mono"/>
+          </div>
+          <div class="col-span-2">
+            <label class="block text-[10px] text-slate-500 mb-1">ชื่อวิชาเต็ม</label>
+            <input type="text" id="subjectName" placeholder="เสริมทักษะคณิตศาสตร์ 1" class="w-full h-9 px-2 text-xs border border-slate-200 rounded focus:border-[#185FA5] outline-none"/>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">ห้องเรียน</label>
+            <select id="classId" class="w-full h-9 px-2 text-xs border border-slate-200 rounded focus:border-[#185FA5] outline-none">
+              <option value="">-- เลือก --</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">ประเภท</label>
+            <select id="subjectGroup" class="w-full h-9 px-2 text-xs border border-slate-200 rounded focus:border-[#185FA5] outline-none">
+              <option value="academic">วิชาการ</option>
+              <option value="activity">กิจกรรม</option>
+            </select>
+          </div>
+          <div class="flex items-end gap-1">
+            <button id="saveBtn" onclick="saveSubject()" class="flex-1 h-9 text-xs bg-[#1D9E75] hover:bg-[#0F6E56] text-white rounded font-medium">บันทึก</button>
+            <button id="cancelBtn" onclick="cancelEdit()" class="hidden h-9 px-2 text-xs bg-slate-200 text-slate-600 rounded">ยกเลิก</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- รายการวิชา -->
+      <div class="p-4">
+        <p class="text-xs text-slate-500 mb-3">รายวิชาทั้งหมด (<span id="subjCount">0</span> วิชา)</p>
+        <div id="subjectList" class="space-y-2">
+          <div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyZB1sqZKu_--r5_mwf9RCJm4u9cTjzrOMToh_ULv22lw81oRZ3U9if0YxkV_nNhWhesw/exec';
+
+    const user = JSON.parse(localStorage.getItem('banlalom_user') || '{}');
+    if (!user.id) window.location.href = 'login.html';
+
+    let subjects = [];
+    let editingId = null;
+
+    const GROUP_LABEL = { academic: 'วิชาการ', activity: 'กิจกรรม' };
+
+    function showError(msg) {
+      const el = document.getElementById('formError');
+      el.classList.remove('hidden');
+      el.textContent = msg;
+    }
+    function hideError() {
+      document.getElementById('formError').classList.add('hidden');
+    }
+
+    // โหลดห้องเรียนใส่ dropdown
+    async function loadClasses() {
+      try {
+        const res = await fetch(API_URL + '?action=getClasses');
+        const data = await res.json();
+        if (data.success) {
+          const sel = document.getElementById('classId');
+          data.data.forEach(c => {
+            sel.innerHTML += `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`;
+          });
+        }
+      } catch (err) {}
+    }
+
+    // โหลดรายวิชา
+    async function loadSubjects() {
+      try {
+        const res = await fetch(API_URL + '?action=getSubjects&teacherId=' + encodeURIComponent(user.id));
+        const data = await res.json();
+        if (data.success) {
+          subjects = data.data;
+          renderSubjects();
+        }
+      } catch (err) {
+        document.getElementById('subjectList').innerHTML =
+          '<div class="text-center text-sm text-red-500 py-6">โหลดไม่สำเร็จ</div>';
+      }
+    }
+
+    function renderSubjects() {
+      const list = document.getElementById('subjectList');
+      document.getElementById('subjCount').textContent = subjects.length;
+
+      if (!subjects.length) {
+        list.innerHTML = '<div class="text-center text-sm text-slate-400 py-6"><i class="ti ti-book-off text-2xl block mb-2"></i>ยังไม่มีรายวิชา เพิ่มวิชาแรกได้เลย</div>';
+        return;
+      }
+
+      list.innerHTML = subjects.map(s => {
+        const isActivity = s.subjectGroup === 'activity';
+        const badge = isActivity
+          ? '<span class="text-[9px] bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full">กิจกรรม</span>'
+          : '<span class="text-[9px] bg-blue-50 text-blue-800 px-2 py-0.5 rounded-full">วิชาการ</span>';
+        return `
+          <div class="flex items-center gap-2 p-2.5 border border-slate-100 rounded-lg">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-mono text-[11px] text-slate-400">${s.subjectId}</span>
+                <span class="text-sm font-medium">${s.subjectName}</span>
+                ${badge}
+              </div>
+              <p class="text-[10px] text-slate-500 mt-0.5">${s.classId || 'ไม่ระบุห้อง'}</p>
+            </div>
+            <button onclick="editSubject('${s.subjectId}')" class="text-[#185FA5] p-1"><i class="ti ti-edit text-[15px]"></i></button>
+            <button onclick="deleteSubject('${s.subjectId}','${s.subjectName.replace(/'/g,"")}')" class="text-[#E24B4A] p-1"><i class="ti ti-trash text-[15px]"></i></button>
+          </div>`;
+      }).join('');
+    }
+
+    async function saveSubject() {
+      hideError();
+      const subjectId = document.getElementById('subjectId').value.trim();
+      const subjectName = document.getElementById('subjectName').value.trim();
+      const classId = document.getElementById('classId').value;
+      const subjectGroup = document.getElementById('subjectGroup').value;
+
+      if (!subjectId || !subjectName) {
+        showError('กรุณากรอกรหัสวิชาและชื่อวิชา');
+        return;
+      }
+
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.textContent = 'กำลังบันทึก...';
+
+      const action = editingId ? 'updateSubject' : 'addSubject';
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: action,
+            subjectId: subjectId,
+            subjectName: subjectName,
+            classId: classId,
+            subjectGroup: subjectGroup,
+            teacherId: user.id
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          resetForm();
+          loadSubjects();
+        } else {
+          showError(data.error || 'บันทึกไม่สำเร็จ');
+        }
+      } catch (err) {
+        showError('เชื่อมต่อระบบไม่ได้');
+      }
+      btn.disabled = false;
+      btn.textContent = 'บันทึก';
+    }
+
+    function editSubject(id) {
+      const s = subjects.find(x => x.subjectId === id);
+      if (!s) return;
+      editingId = id;
+      document.getElementById('subjectId').value = s.subjectId;
+      document.getElementById('subjectId').readOnly = true;
+      document.getElementById('subjectId').classList.add('bg-slate-100');
+      document.getElementById('subjectName').value = s.subjectName;
+      document.getElementById('classId').value = s.classId;
+      document.getElementById('subjectGroup').value = s.subjectGroup;
+      document.getElementById('formTitle').innerHTML = '<i class="ti ti-edit"></i> แก้ไขวิชา';
+      document.getElementById('cancelBtn').classList.remove('hidden');
+      window.scrollTo(0, 0);
+    }
+
+    function cancelEdit() { resetForm(); }
+
+    function resetForm() {
+      editingId = null;
+      document.getElementById('subjectId').value = '';
+      document.getElementById('subjectId').readOnly = false;
+      document.getElementById('subjectId').classList.remove('bg-slate-100');
+      document.getElementById('subjectName').value = '';
+      document.getElementById('classId').value = '';
+      document.getElementById('subjectGroup').value = 'academic';
+      document.getElementById('formTitle').innerHTML = '<i class="ti ti-plus"></i> เพิ่มวิชาใหม่';
+      document.getElementById('cancelBtn').classList.add('hidden');
+      hideError();
+    }
+
+    async function deleteSubject(id, name) {
+      if (!confirm('ต้องการลบวิชา "' + name + '" ใช่หรือไม่?')) return;
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'deleteSubject', subjectId: id })
+        });
+        const data = await res.json();
+        if (data.success) {
+          loadSubjects();
+        } else {
+          alert('ลบไม่สำเร็จ: ' + (data.error || ''));
+        }
+      } catch (err) {
+        alert('เชื่อมต่อระบบไม่ได้');
+      }
+    }
+
+    loadClasses();
+    loadSubjects();
+  </script>
+
+</body>
+</html>
