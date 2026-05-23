@@ -19,7 +19,6 @@
 
   <div class="flex min-h-screen">
 
-    <!-- Sidebar -->
     <aside class="w-56 bg-[#042C53] text-[#B5D4F4] flex flex-col fixed h-screen">
       <div class="flex items-center gap-2.5 px-4 py-4 border-b border-white/10">
         <div class="w-9 h-9 rounded-lg bg-[#EF9F27] text-[#042C53] flex items-center justify-center flex-shrink-0">
@@ -36,11 +35,12 @@
         <a href="admin.html" class="nav-link active flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5"><i class="ti ti-layout-dashboard text-[15px]"></i> ภาพรวม</a>
 
         <p class="text-[9px] font-medium text-[#85B7EB] uppercase tracking-wider px-2 mb-1.5 mt-3.5">เช็คชื่อ</p>
+        <a href="qr-scan.html" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5"><i class="ti ti-qrcode text-[15px]"></i> สแกน QR เช็คชื่อ</a>
         <a href="checkin.html" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5"><i class="ti ti-clipboard-check text-[15px]"></i> เช็คชื่อ Homeroom</a>
         <a href="checkin-subject.html" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5"><i class="ti ti-book text-[15px]"></i> เช็คชื่อรายคาบ</a>
-        <a onclick="alert('ฟีเจอร์นี้จะมาในขั้นถัดไป')" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5 cursor-pointer"><i class="ti ti-qrcode text-[15px]"></i> QR Code</a>
 
         <p class="text-[9px] font-medium text-[#85B7EB] uppercase tracking-wider px-2 mb-1.5 mt-3.5">จัดการข้อมูล</p>
+        <a href="qr-cards.html" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5"><i class="ti ti-id-badge-2 text-[15px]"></i> สร้างบัตร QR</a>
         <a href="subjects.html" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5"><i class="ti ti-book-2 text-[15px]"></i> รายวิชา</a>
         <a onclick="alert('ฟีเจอร์นี้จะมาในขั้นถัดไป')" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5 cursor-pointer"><i class="ti ti-users text-[15px]"></i> นักเรียน</a>
         <a onclick="alert('ฟีเจอร์นี้จะมาในขั้นถัดไป')" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5 cursor-pointer"><i class="ti ti-user-star text-[15px]"></i> ครู</a>
@@ -63,7 +63,6 @@
       </div>
     </aside>
 
-    <!-- Main content -->
     <main class="flex-1 ml-56 p-6">
 
       <div class="flex items-center justify-between mb-5">
@@ -71,9 +70,7 @@
           <h1 class="text-lg font-medium text-slate-800">ภาพรวมระบบ</h1>
           <p id="todayDate" class="text-xs text-slate-500 mt-0.5">...</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button class="w-8 h-8 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center"><i class="ti ti-bell text-sm"></i></button>
-        </div>
+        <button class="w-8 h-8 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center"><i class="ti ti-bell text-sm"></i></button>
       </div>
 
       <div class="bg-gradient-to-br from-[#042C53] to-[#185FA5] rounded-xl p-5 mb-5 text-white relative overflow-hidden">
@@ -90,44 +87,48 @@
 
       <div class="grid grid-cols-4 gap-3 mb-5">
         <div class="bg-white rounded-lg p-3 border-l-[3px] border-[#185FA5] border border-slate-100">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs text-slate-500">นักเรียนทั้งหมด</span>
-            <i class="ti ti-users text-[#185FA5] text-sm"></i>
-          </div>
+          <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">นักเรียนทั้งหมด</span><i class="ti ti-users text-[#185FA5] text-sm"></i></div>
           <p id="statStudents" class="text-2xl font-medium text-slate-800">-</p>
           <p class="text-[10px] text-slate-400 mt-0.5">รวมทั้งโรงเรียน</p>
         </div>
         <div class="bg-white rounded-lg p-3 border-l-[3px] border-[#1D9E75] border border-slate-100">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs text-slate-500">มาเรียนวันนี้</span>
-            <i class="ti ti-circle-check text-[#1D9E75] text-sm"></i>
-          </div>
+          <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">มาเรียนวันนี้</span><i class="ti ti-circle-check text-[#1D9E75] text-sm"></i></div>
           <p id="statPresent" class="text-2xl font-medium text-[#085041]">-</p>
-          <p class="text-[10px] text-slate-400 mt-0.5">รอเช็คชื่อ</p>
+          <p class="text-[10px] text-slate-400 mt-0.5">เช็คชื่อแล้ว</p>
         </div>
         <div class="bg-white rounded-lg p-3 border-l-[3px] border-[#EF9F27] border border-slate-100">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs text-slate-500">ครู</span>
-            <i class="ti ti-user-star text-[#BA7517] text-sm"></i>
-          </div>
+          <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">ครู</span><i class="ti ti-user-star text-[#BA7517] text-sm"></i></div>
           <p id="statTeachers" class="text-2xl font-medium text-[#633806]">-</p>
           <p class="text-[10px] text-slate-400 mt-0.5">ในระบบ</p>
         </div>
         <div class="bg-white rounded-lg p-3 border-l-[3px] border-[#E24B4A] border border-slate-100">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs text-slate-500">ห้องเรียน</span>
-            <i class="ti ti-building text-[#E24B4A] text-sm"></i>
-          </div>
+          <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">ห้องเรียน</span><i class="ti ti-building text-[#E24B4A] text-sm"></i></div>
           <p id="statClasses" class="text-2xl font-medium text-[#791F1F]">-</p>
           <p class="text-[10px] text-slate-400 mt-0.5">ทั้งหมด</p>
         </div>
       </div>
 
+      <!-- Quick actions -->
+      <div class="grid grid-cols-3 gap-3 mb-5">
+        <a href="qr-scan.html" class="bg-white rounded-xl border border-slate-100 p-4 hover:border-[#185FA5] transition group">
+          <div class="w-10 h-10 rounded-lg bg-[#E6F1FB] text-[#185FA5] flex items-center justify-center mb-2 group-hover:bg-[#185FA5] group-hover:text-white transition"><i class="ti ti-qrcode text-xl"></i></div>
+          <p class="text-sm font-medium text-slate-800">สแกน QR เช็คชื่อ</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">เปิดกล้องสแกนบัตรนักเรียน</p>
+        </a>
+        <a href="checkin.html" class="bg-white rounded-xl border border-slate-100 p-4 hover:border-[#1D9E75] transition group">
+          <div class="w-10 h-10 rounded-lg bg-[#E1F5EE] text-[#1D9E75] flex items-center justify-center mb-2 group-hover:bg-[#1D9E75] group-hover:text-white transition"><i class="ti ti-clipboard-check text-xl"></i></div>
+          <p class="text-sm font-medium text-slate-800">เช็คชื่อ Homeroom</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">ติ๊กรายชื่อด้วยมือ</p>
+        </a>
+        <a href="qr-cards.html" class="bg-white rounded-xl border border-slate-100 p-4 hover:border-[#EF9F27] transition group">
+          <div class="w-10 h-10 rounded-lg bg-[#FAEEDA] text-[#BA7517] flex items-center justify-center mb-2 group-hover:bg-[#EF9F27] group-hover:text-white transition"><i class="ti ti-id-badge-2 text-xl"></i></div>
+          <p class="text-sm font-medium text-slate-800">สร้างบัตร QR</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">พิมพ์บัตรแจกนักเรียน</p>
+        </a>
+      </div>
+
       <div class="bg-white rounded-xl border border-slate-100 p-5">
-        <div class="flex items-center gap-2 mb-3">
-          <i class="ti ti-circle-check text-[#1D9E75]"></i>
-          <h2 class="text-sm font-medium text-slate-700">สถานะระบบ</h2>
-        </div>
+        <div class="flex items-center gap-2 mb-3"><i class="ti ti-circle-check text-[#1D9E75]"></i><h2 class="text-sm font-medium text-slate-700">สถานะระบบ</h2></div>
         <div id="systemStatus" class="text-xs text-slate-500">กำลังตรวจสอบ...</div>
       </div>
 
@@ -166,7 +167,9 @@
         const cData = await cRes.json();
         if (cData.success) document.getElementById('statClasses').textContent = (cData.data || []).length;
 
-        document.getElementById('statPresent').textContent = '0';
+        const stRes = await fetch(API_URL + '?action=getTodayStats');
+        const stData = await stRes.json();
+        if (stData.success) document.getElementById('statPresent').textContent = stData.data.present || 0;
 
         document.getElementById('systemStatus').innerHTML =
           '<div class="flex items-center gap-2 text-[#1D9E75]"><i class="ti ti-circle-check-filled"></i> เชื่อมต่อฐานข้อมูลสำเร็จ ดึงข้อมูลได้ปกติ</div>';
