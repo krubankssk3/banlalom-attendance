@@ -138,7 +138,12 @@
           // เก็บ session ใน localStorage
           localStorage.setItem('banlalom_token', data.token);
           localStorage.setItem('banlalom_user', JSON.stringify(data.user));
-
+          // ===== เพิ่มบล็อกนี้ =====
+        if (data.mustChangePassword) {
+            window.location.href = 'change-password.html';
+            return;
+          }
+          // ========================
           // ไปยัง Dashboard ตาม role
           const role = data.user.role;
           if (role === 'Admin') {
