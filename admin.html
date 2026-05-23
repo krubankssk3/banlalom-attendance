@@ -33,13 +33,15 @@
 
       <nav class="flex-1 overflow-y-auto px-2.5 py-3">
         <p class="text-[9px] font-medium text-[#85B7EB] uppercase tracking-wider px-2 mb-1.5">เมนูหลัก</p>
-        <a class="nav-link active flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5"><i class="ti ti-layout-dashboard text-[15px]"></i> ภาพรวม</a>
+        <a href="admin.html" class="nav-link active flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5"><i class="ti ti-layout-dashboard text-[15px]"></i> ภาพรวม</a>
 
         <p class="text-[9px] font-medium text-[#85B7EB] uppercase tracking-wider px-2 mb-1.5 mt-3.5">เช็คชื่อ</p>
+        <a href="checkin.html" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5"><i class="ti ti-clipboard-check text-[15px]"></i> เช็คชื่อ Homeroom</a>
+        <a href="checkin-subject.html" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5"><i class="ti ti-book text-[15px]"></i> เช็คชื่อรายคาบ</a>
         <a onclick="alert('ฟีเจอร์นี้จะมาในขั้นถัดไป')" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5 cursor-pointer"><i class="ti ti-qrcode text-[15px]"></i> QR Code</a>
-        <a href="checkin.html" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5 cursor-pointer"><i class="ti ti-clipboard-check text-[15px]"></i> Manual</a>
 
         <p class="text-[9px] font-medium text-[#85B7EB] uppercase tracking-wider px-2 mb-1.5 mt-3.5">จัดการข้อมูล</p>
+        <a href="subjects.html" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5"><i class="ti ti-book-2 text-[15px]"></i> รายวิชา</a>
         <a onclick="alert('ฟีเจอร์นี้จะมาในขั้นถัดไป')" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5 cursor-pointer"><i class="ti ti-users text-[15px]"></i> นักเรียน</a>
         <a onclick="alert('ฟีเจอร์นี้จะมาในขั้นถัดไป')" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs mb-0.5 cursor-pointer"><i class="ti ti-user-star text-[15px]"></i> ครู</a>
 
@@ -64,7 +66,6 @@
     <!-- Main content -->
     <main class="flex-1 ml-56 p-6">
 
-      <!-- Header -->
       <div class="flex items-center justify-between mb-5">
         <div>
           <h1 class="text-lg font-medium text-slate-800">ภาพรวมระบบ</h1>
@@ -75,7 +76,6 @@
         </div>
       </div>
 
-      <!-- Welcome banner -->
       <div class="bg-gradient-to-br from-[#042C53] to-[#185FA5] rounded-xl p-5 mb-5 text-white relative overflow-hidden">
         <div class="absolute -top-5 -right-5 w-28 h-28 bg-amber-400/15 rounded-full"></div>
         <div class="relative">
@@ -88,7 +88,6 @@
         </div>
       </div>
 
-      <!-- Stat cards -->
       <div class="grid grid-cols-4 gap-3 mb-5">
         <div class="bg-white rounded-lg p-3 border-l-[3px] border-[#185FA5] border border-slate-100">
           <div class="flex items-center justify-between mb-1">
@@ -124,7 +123,6 @@
         </div>
       </div>
 
-      <!-- Status card -->
       <div class="bg-white rounded-xl border border-slate-100 p-5">
         <div class="flex items-center gap-2 mb-3">
           <i class="ti ti-circle-check text-[#1D9E75]"></i>
@@ -140,48 +138,33 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbyZB1sqZKu_--r5_mwf9RCJm4u9cTjzrOMToh_ULv22lw81oRZ3U9if0YxkV_nNhWhesw/exec';
 
-    // ตรวจ session
     const user = JSON.parse(localStorage.getItem('banlalom_user') || '{}');
-    if (!user.id) {
-      window.location.href = 'login.html';
-    }
+    if (!user.id) { window.location.href = 'login.html'; }
 
-    // แสดงข้อมูลผู้ใช้
     document.getElementById('userName').textContent = user.name || '-';
     document.getElementById('userRole').textContent = user.role || '-';
     document.getElementById('userAvatar').textContent = (user.name || 'A').charAt(0);
     document.getElementById('welcomeName').textContent = 'สวัสดี ' + (user.name || '');
 
-    // แสดงวันที่
     const days = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
     const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
     const now = new Date();
     document.getElementById('todayDate').textContent =
       'วัน' + days[now.getDay()] + 'ที่ ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + (now.getFullYear()+543);
 
-    // ดึงข้อมูลสถิติจาก API
     async function loadStats() {
       try {
-        // ดึงนักเรียน
         const sRes = await fetch(API_URL + '?action=getStudents&page=1&size=1');
         const sData = await sRes.json();
-        if (sData.success) {
-          document.getElementById('statStudents').textContent = sData.total || 0;
-        }
+        if (sData.success) document.getElementById('statStudents').textContent = sData.total || 0;
 
-        // ดึงครู
         const tRes = await fetch(API_URL + '?action=getTeachers');
         const tData = await tRes.json();
-        if (tData.success) {
-          document.getElementById('statTeachers').textContent = (tData.data || []).length;
-        }
+        if (tData.success) document.getElementById('statTeachers').textContent = (tData.data || []).length;
 
-        // ดึงห้องเรียน
         const cRes = await fetch(API_URL + '?action=getClasses');
         const cData = await cRes.json();
-        if (cData.success) {
-          document.getElementById('statClasses').textContent = (cData.data || []).length;
-        }
+        if (cData.success) document.getElementById('statClasses').textContent = (cData.data || []).length;
 
         document.getElementById('statPresent').textContent = '0';
 
