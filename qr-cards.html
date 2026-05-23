@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>บัตร QR นักเรียน - โรงเรียนบ้านละลม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.5.0/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Sarabun', sans-serif; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; }
+      .card-grid { gap: 8px; }
+      .qr-card { break-inside: avoid; border: 1px dashed #ccc !important; }
+    }
+    .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <div class="max-w-3xl mx-auto p-4">
+
+    <a href="admin.html" class="no-print inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 mb-3">
+      <i class="ti ti-arrow-left"></i> กลับ Dashboard
+    </a>
+
+    <!-- Toolbar -->
+    <div class="no-print bg-white rounded-xl border border-slate-100 p-4 mb-4">
+      <div class="flex items-center gap-2 mb-3">
+        <i class="ti ti-id-badge-2 text-[#185FA5]"></i>
+        <h1 class="text-base font-medium text-slate-800">สร้างบัตร QR นักเรียน</h1>
+      </div>
+      <div class="flex gap-2">
+        <select id="classSelect" class="flex-1 h-10 px-3 text-sm border border-slate-200 rounded-lg outline-none">
+          <option value="">-- เลือกห้อง --</option>
+        </select>
+        <button onclick="loadCards()" class="px-4 bg-[#185FA5] text-white rounded-lg text-sm font-medium"><i class="ti ti-refresh"></i> สร้าง</button>
+        <button onclick="window.print()" class="px-4 bg-[#1D9E75] text-white rounded-lg text-sm font-medium"><i class="ti ti-printer"></i> พิมพ์</button>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-2">เลือกห้อง กดสร้าง แล้วกดพิมพ์ → ตัดบัตรแจกนักเรียน</p>
+    </div>
+
+    <!-- หัวกระดาษ (แสดงตอนพิมพ์) -->
+    <div id="printHeader" class="hidden text-center mb-4">
+      <p class="text-base font-medium">บัตรเช็คชื่อนักเรียน โรงเรียนบ้านละลม</p>
+      <p id="printClass" class="text-sm text-slate-600"></p>
+    </div>
+
+    <!-- การ์ด -->
+    <div id="cardGrid" class="card-grid">
+      <div class="no-print col-span-3 text-center text-sm text-slate-400 py-10">
+        <i class="ti ti-id text-3xl block mb-2"></i>
+        เลือกห้องเรียนแล้วกดสร้าง
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyZB1sqZKu_--r5_mwf9RCJm4u9cTjzrOMToh_ULv22lw81oRZ3U9if0YxkV_nNhWhesw/exec';
+    const user = JSON.parse(localStorage.getItem('banlalom_user') || '{}');
+    if (!user.id) window.location.href = 'login.html';
+
+    async function loadClasses() {
+      try {
+        const res = await fetch(API_URL + '?action=getClasses');
+        const data = await res.json();
+        if (data.success) {
+          const sel = document.getElementById('classSelect');
+          data.data.forEach(c => {
+            sel.innerHTML += `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`;
+          });
+        }
+      } catch (err) {}
+    }
+
+    async function loadCards() {
+      const classId = document.getElementById('classSelect').value;
+      if (!classId) { alert('กรุณาเลือกห้อง'); return; }
+
+      const grid = document.getElementById('cardGrid');
+      grid.innerHTML = '<div class="no-print col-span-3 text-center text-sm text-slate-400 py-10"><i class="ti ti-loader animate-spin text-2xl block mb-2"></i>กำลังโหลด...</div>';
+
+      try {
+        const res = await fetch(API_URL + '?action=getStudentsByClass&classId=' + encodeURIComponent(classId));
+        const data = await res.json();
+        if (!data.success || !data.data.length) {
+          grid.innerHTML = '<div class="col-span-3 text-center text-sm text-slate-400 py-10">ไม่มีนักเรียนในห้องนี้</div>';
+          return;
+        }
+
+        const className = document.getElementById('classSelect').selectedOptions[0].text;
+        document.getElementById('printClass').textContent = 'ห้อง ' + className + ' · จำนวน ' + data.data.length + ' คน';
+        document.getElementById('printHeader').classList.remove('hidden');
+
+        grid.innerHTML = '';
+        data.data.forEach((s, idx) => {
+          const cardId = 'qr-' + idx;
+          const card = document.createElement('div');
+          card.className = 'qr-card bg-white border border-slate-200 rounded-lg p-3 text-center';
+          card.innerHTML = `
+            <div class="flex items-center justify-center gap-1 mb-1">
+              <div class="w-6 h-6 rounded bg-[#042C53] text-white flex items-center justify-center text-[10px]"><i class="ti ti-school"></i></div>
+              <span class="text-[10px] font-medium text-[#042C53]">บ้านละลม</span>
+            </div>
+            <div id="${cardId}" class="flex justify-center my-2"></div>
+            <p class="text-xs font-medium truncate">${s.prefix}${s.firstName} ${s.lastName}</p>
+            <p class="text-[10px] text-slate-500">เลขที่ ${s.number} · ${classId}</p>
+            <p class="font-mono text-[10px] text-slate-400 mt-0.5">${s.studentId}</p>
+          `;
+          grid.appendChild(card);
+
+          new QRCode(document.getElementById(cardId), {
+            text: String(s.studentId),
+            width: 90, height: 90,
+            colorDark: '#042C53', colorLight: '#ffffff'
+          });
+        });
+      } catch (err) {
+        grid.innerHTML = '<div class="col-span-3 text-center text-sm text-red-500 py-10">โหลดไม่สำเร็จ: ' + err.message + '</div>';
+      }
+    }
+
+    loadClasses();
+  </script>
+
+</body>
+</html>

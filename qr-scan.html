@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สแกนเช็คชื่อ - โรงเรียนบ้านละลม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.5.0/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Sarabun', sans-serif; } #reader { border-radius: 12px; overflow: hidden; } </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <div class="max-w-lg mx-auto p-4">
+
+    <a href="admin.html" class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 mb-3">
+      <i class="ti ti-arrow-left"></i> กลับ Dashboard
+    </a>
+
+    <!-- ===== STEP 1: เปิด Session ===== -->
+    <div id="setupPanel" class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+      <div class="bg-gradient-to-br from-[#042C53] to-[#185FA5] p-4 text-white">
+        <p class="text-base font-medium">สแกนเช็คชื่อ</p>
+        <p class="text-xs text-blue-200 mt-1">เปิดช่วงเวลาเช็คชื่อ แล้วสแกนบัตรนักเรียน</p>
+      </div>
+      <div class="p-4">
+        <label class="block text-xs font-medium text-slate-700 mb-1.5">เลือกห้องเรียน</label>
+        <select id="classSelect" class="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg outline-none mb-3">
+          <option value="">-- เลือกห้อง --</option>
+        </select>
+
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1.5">คาบ</label>
+            <select id="periodSelect" class="w-full h-10 px-2 text-sm border border-slate-200 rounded-lg outline-none">
+              <option value="homeroom">Homeroom</option>
+              <option value="1">คาบ 1</option><option value="2">คาบ 2</option>
+              <option value="3">คาบ 3</option><option value="4">คาบ 4</option>
+              <option value="5">คาบ 5</option><option value="6">คาบ 6</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1.5">เปิดนาน (นาที)</label>
+            <select id="durationSelect" class="w-full h-10 px-2 text-sm border border-slate-200 rounded-lg outline-none">
+              <option value="5">5 นาที</option>
+              <option value="10">10 นาที</option>
+              <option value="15" selected>15 นาที</option>
+              <option value="30">30 นาที</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="openSession()" class="w-full h-11 bg-[#1D9E75] hover:bg-[#0F6E56] text-white rounded-lg text-sm font-medium">
+          <i class="ti ti-lock-open"></i> เปิดเช็คชื่อ + เริ่มสแกน
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== STEP 2: สแกน ===== -->
+    <div id="scanPanel" class="hidden">
+      <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden mb-3">
+        <div class="bg-[#042C53] p-3 text-white flex items-center justify-between">
+          <div>
+            <p id="scanClassInfo" class="text-sm font-medium">-</p>
+            <p id="countdown" class="text-xs text-amber-400">เหลือเวลา --:--</p>
+          </div>
+          <button onclick="closeSession()" class="bg-red-500/80 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg">
+            <i class="ti ti-lock"></i> ปิด
+          </button>
+        </div>
+        <div class="p-3">
+          <div id="reader" class="w-full"></div>
+          <div id="scanResult" class="mt-3 p-3 rounded-lg bg-slate-50 text-center text-sm text-slate-400">
+            หันกล้องไปที่บัตร QR ของนักเรียน
+          </div>
+        </div>
+      </div>
+
+      <!-- รายชื่อที่เช็คแล้ว -->
+      <div class="bg-white rounded-2xl border border-slate-100 p-4">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-sm font-medium text-slate-700">เช็คแล้ว (<span id="checkedCount">0</span> คน)</p>
+        </div>
+        <div id="checkedList" class="space-y-1.5 max-h-60 overflow-y-auto"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyZB1sqZKu_--r5_mwf9RCJm4u9cTjzrOMToh_ULv22lw81oRZ3U9if0YxkV_nNhWhesw/exec';
+    const user = JSON.parse(localStorage.getItem('banlalom_user') || '{}');
+    if (!user.id) window.location.href = 'login.html';
+
+    let currentSession = null;
+    let html5QrScanner = null;
+    let countdownTimer = null;
+    let expiryTime = null;
+    let lastScan = '';
+    let lastScanTime = 0;
+
+    async function loadClasses() {
+      try {
+        const res = await fetch(API_URL + '?action=getClasses');
+        const data = await res.json();
+        if (data.success) {
+          const sel = document.getElementById('classSelect');
+          data.data.forEach(c => {
+            sel.innerHTML += `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`;
+          });
+        }
+      } catch (err) {}
+    }
+
+    async function openSession() {
+      const classId = document.getElementById('classSelect').value;
+      const period = document.getElementById('periodSelect').value;
+      const durationMin = document.getElementById('durationSelect').value;
+      if (!classId) { alert('กรุณาเลือกห้อง'); return; }
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'openSession', classId, period,
+            durationMin: parseInt(durationMin), teacherId: user.id
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          currentSession = data.sessionId;
+          expiryTime = new Date(data.expiry).getTime();
+          const className = document.getElementById('classSelect').selectedOptions[0].text;
+          const periodText = period === 'homeroom' ? 'Homeroom' : 'คาบ ' + period;
+          document.getElementById('scanClassInfo').textContent = className + ' · ' + periodText;
+          document.getElementById('setupPanel').classList.add('hidden');
+          document.getElementById('scanPanel').classList.remove('hidden');
+          startCountdown();
+          startScanner();
+        } else {
+          alert('เปิดเช็คชื่อไม่สำเร็จ: ' + (data.error || ''));
+        }
+      } catch (err) {
+        alert('เชื่อมต่อระบบไม่ได้');
+      }
+    }
+
+    function startCountdown() {
+      countdownTimer = setInterval(() => {
+        const remain = Math.max(0, Math.floor((expiryTime - Date.now()) / 1000));
+        const mm = String(Math.floor(remain / 60)).padStart(2, '0');
+        const ss = String(remain % 60).padStart(2, '0');
+        document.getElementById('countdown').textContent = 'เหลือเวลา ' + mm + ':' + ss;
+        if (remain <= 0) {
+          document.getElementById('countdown').textContent = 'หมดเวลาแล้ว';
+          stopScanner();
+          clearInterval(countdownTimer);
+        }
+      }, 1000);
+    }
+
+    function startScanner() {
+      html5QrScanner = new Html5Qrcode('reader');
+      html5QrScanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 200, height: 200 } },
+        onScanSuccess,
+        () => {}
+      ).catch(err => {
+        document.getElementById('scanResult').innerHTML =
+          '<span class="text-red-500">เปิดกล้องไม่ได้: ' + err + '</span>';
+      });
+    }
+
+    function stopScanner() {
+      if (html5QrScanner) {
+        html5QrScanner.stop().catch(() => {});
+      }
+    }
+
+    async function onScanSuccess(decodedText) {
+      const now = Date.now();
+      // กันสแกนซ้ำเร็วเกินไป (คนเดิมภายใน 3 วิ)
+      if (decodedText === lastScan && now - lastScanTime < 3000) return;
+      lastScan = decodedText;
+      lastScanTime = now;
+
+      const resultEl = document.getElementById('scanResult');
+      resultEl.innerHTML = '<span class="text-slate-500">กำลังบันทึก...</span>';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'scanCheckin',
+            sessionId: currentSession,
+            studentId: decodedText.trim(),
+            recordedBy: user.id
+          })
+        });
+        const data = await res.json();
+
+        if (data.success && !data.already) {
+          resultEl.className = 'mt-3 p-3 rounded-lg bg-green-50 text-center';
+          resultEl.innerHTML = `<i class="ti ti-circle-check text-[#1D9E75] text-xl"></i><p class="text-sm font-medium text-green-800">${data.studentName}</p><p class="text-xs text-green-600">เช็คชื่อสำเร็จ ${data.time}</p>`;
+          addToList(data.studentName, data.studentNumber, data.time);
+          beep(true);
+        } else if (data.success && data.already) {
+          resultEl.className = 'mt-3 p-3 rounded-lg bg-amber-50 text-center';
+          resultEl.innerHTML = `<i class="ti ti-info-circle text-amber-600 text-xl"></i><p class="text-sm font-medium text-amber-800">${data.studentName}</p><p class="text-xs text-amber-600">เช็คชื่อไปแล้ว</p>`;
+          beep(false);
+        } else {
+          resultEl.className = 'mt-3 p-3 rounded-lg bg-red-50 text-center';
+          resultEl.innerHTML = `<i class="ti ti-alert-circle text-red-500 text-xl"></i><p class="text-sm font-medium text-red-800">${data.error || 'ไม่สำเร็จ'}</p>`;
+          beep(false);
+        }
+      } catch (err) {
+        resultEl.innerHTML = '<span class="text-red-500">เชื่อมต่อไม่ได้</span>';
+      }
+    }
+
+    let checkedCount = 0;
+    function addToList(name, number, time) {
+      checkedCount++;
+      document.getElementById('checkedCount').textContent = checkedCount;
+      const list = document.getElementById('checkedList');
+      const item = document.createElement('div');
+      item.className = 'flex items-center gap-2 p-2 bg-green-50 rounded-lg';
+      item.innerHTML = `
+        <div class="w-6 h-6 rounded-full bg-[#1D9E75] text-white flex items-center justify-center text-[10px]">${number || '?'}</div>
+        <span class="flex-1 text-xs font-medium">${name}</span>
+        <span class="text-[10px] text-slate-400">${time}</span>`;
+      list.insertBefore(item, list.firstChild);
+    }
+
+    function beep(success) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = success ? 880 : 300;
+        gain.gain.value = 0.1;
+        osc.start();
+        setTimeout(() => { osc.stop(); ctx.close(); }, success ? 120 : 250);
+      } catch (e) {}
+    }
+
+    async function closeSession() {
+      if (!confirm('ต้องการปิดการเช็คชื่อใช่หรือไม่?')) return;
+      stopScanner();
+      if (countdownTimer) clearInterval(countdownTimer);
+      try {
+        await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'closeSession', sessionId: currentSession })
+        });
+      } catch (err) {}
+      alert('ปิดการเช็คชื่อแล้ว เช็คไปทั้งหมด ' + checkedCount + ' คน');
+      window.location.href = 'admin.html';
+    }
+
+    loadClasses();
+  </script>
+
+</body>
+</html>
