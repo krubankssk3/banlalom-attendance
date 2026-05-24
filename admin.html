@@ -54,11 +54,13 @@
 
       <div class="px-2.5 py-3 border-t border-white/10">
         <div class="flex items-center gap-2 px-2 py-1.5">
-          <div id="userAvatar" class="w-7 h-7 rounded-full bg-[#EF9F27] text-[#042C53] flex items-center justify-center text-[11px] font-medium">A</div>
-          <div class="flex-1 min-w-0">
-            <p id="userName" class="text-white text-[11px] truncate">...</p>
-            <p id="userRole" class="text-[#85B7EB] text-[9px]">...</p>
-          </div>
+          <a href="profile.html" class="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80" title="ดูโปรไฟล์">
+            <div id="userAvatar" class="w-7 h-7 rounded-full bg-[#EF9F27] text-[#042C53] flex items-center justify-center text-[11px] font-medium">A</div>
+            <div class="flex-1 min-w-0">
+              <p id="userName" class="text-white text-[11px] truncate">...</p>
+              <p id="userRole" class="text-[#85B7EB] text-[9px]">...</p>
+            </div>
+          </a>
           <button onclick="logout()" title="ออกจากระบบ" class="text-[#85B7EB] hover:text-white">
             <i class="ti ti-logout text-sm"></i>
           </button>
