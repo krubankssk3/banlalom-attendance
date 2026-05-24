@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จัดการครู - โรงเรียนบ้านละลม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.5.0/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Sarabun', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <div class="max-w-3xl mx-auto p-4">
+
+    <a href="admin.html" class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 mb-3">
+      <i class="ti ti-arrow-left"></i> กลับ Dashboard
+    </a>
+
+    <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+
+      <div class="bg-gradient-to-br from-[#042C53] to-[#185FA5] p-4 text-white">
+        <p class="text-base font-medium">จัดการครู</p>
+        <p class="text-xs text-blue-200 mt-1">เพิ่ม แก้ไข ลบ บัญชีครู (สำหรับผู้ดูแลระบบ)</p>
+      </div>
+
+      <!-- ฟอร์ม -->
+      <div class="p-4 bg-slate-50 border-b border-slate-100">
+        <p id="formTitle" class="text-xs font-medium text-[#185FA5] mb-3"><i class="ti ti-user-plus"></i> เพิ่มครูใหม่</p>
+        <div id="formError" class="hidden mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"></div>
+
+        <div class="grid grid-cols-4 gap-2 mb-2">
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">รหัสครู</label>
+            <input type="text" id="teacherId" placeholder="HR-2024-002" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none font-mono"/>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">คำนำหน้า</label>
+            <select id="prefix" class="w-full h-9 px-1 text-xs border border-slate-200 rounded outline-none">
+              <option>นาย</option><option>นาง</option><option>น.ส.</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">ชื่อ</label>
+            <input type="text" id="firstName" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none"/>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">นามสกุล</label>
+            <input type="text" id="lastName" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none"/>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2 mb-3">
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">บทบาท</label>
+            <select id="role" class="w-full h-9 px-1 text-xs border border-slate-200 rounded outline-none">
+              <option value="Homeroom">ครูประจำชั้น</option>
+              <option value="Subject">ครูประจำวิชา</option>
+              <option value="Admin">ผู้ดูแลระบบ</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">ห้องประจำชั้น</label>
+            <select id="assignedClass" class="w-full h-9 px-1 text-xs border border-slate-200 rounded outline-none">
+              <option value="">-- ไม่มี --</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">อีเมล</label>
+            <input type="email" id="email" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none"/>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">เบอร์โทร</label>
+            <input type="tel" id="phone" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none"/>
+          </div>
+        </div>
+
+        <div class="flex gap-1.5">
+          <button id="saveBtn" onclick="saveTeacher()" class="flex-1 h-9 text-xs bg-[#1D9E75] hover:bg-[#0F6E56] text-white rounded font-medium">บันทึก</button>
+          <button id="cancelBtn" onclick="cancelEdit()" class="hidden h-9 px-3 text-xs bg-slate-200 text-slate-600 rounded">ยกเลิก</button>
+        </div>
+        <p class="text-[10px] text-slate-400 mt-2"><i class="ti ti-info-circle"></i> ครูใหม่: รหัสผ่านเริ่มต้น = รหัสครู (ครูเปลี่ยนเองตอน login ครั้งแรก)</p>
+      </div>
+
+      <!-- รายการ -->
+      <div class="p-4">
+        <p class="text-xs text-slate-500 mb-3">ครูทั้งหมด (<span id="tchCount">0</span> คน)</p>
+        <div id="teacherList" class="space-y-2">
+          <div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyZB1sqZKu_--r5_mwf9RCJm4u9cTjzrOMToh_ULv22lw81oRZ3U9if0YxkV_nNhWhesw/exec';
+
+    const user = JSON.parse(localStorage.getItem('banlalom_user') || '{}');
+    if (!user.id) window.location.href = 'login.html';
+
+    let teachers = [];
+    let editingId = null;
+
+    const ROLE_LABEL = { Admin: 'ผู้ดูแลระบบ', Homeroom: 'ครูประจำชั้น', Subject: 'ครูประจำวิชา' };
+    const ROLE_COLOR = { Admin: 'bg-amber-50 text-amber-800', Homeroom: 'bg-blue-50 text-blue-800', Subject: 'bg-purple-50 text-purple-800' };
+
+    function showError(msg) {
+      const el = document.getElementById('formError');
+      el.classList.remove('hidden');
+      el.textContent = msg;
+    }
+    function hideError() { document.getElementById('formError').classList.add('hidden'); }
+
+    async function loadClasses() {
+      try {
+        const res = await fetch(API_URL + '?action=getClasses');
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('assignedClass').innerHTML = '<option value="">-- ไม่มี --</option>' +
+            data.data.map(c => `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`).join('');
+        }
+      } catch (err) {}
+    }
+
+    async function loadTeachers() {
+      try {
+        const res = await fetch(API_URL + '?action=getTeachersManage');
+        const data = await res.json();
+        if (data.success) {
+          teachers = data.data;
+          renderTeachers();
+        }
+      } catch (err) {
+        document.getElementById('teacherList').innerHTML = '<div class="text-center text-sm text-red-500 py-6">โหลดไม่สำเร็จ</div>';
+      }
+    }
+
+    function renderTeachers() {
+      const list = document.getElementById('teacherList');
+      document.getElementById('tchCount').textContent = teachers.length;
+      if (!teachers.length) {
+        list.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">ยังไม่มีครู</div>';
+        return;
+      }
+      list.innerHTML = teachers.map(t => {
+        const roleLabel = ROLE_LABEL[t.role] || t.role;
+        const roleColor = ROLE_COLOR[t.role] || 'bg-slate-50 text-slate-700';
+        return `
+        <div class="flex items-center gap-3 p-2.5 border border-slate-100 rounded-lg">
+          <div class="w-9 h-9 rounded-full bg-[#042C53] text-white flex items-center justify-center text-xs font-medium flex-shrink-0">${(t.firstName||'?').charAt(0)}</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">${t.prefix}${t.firstName} ${t.lastName} <span class="text-[9px] ${roleColor} px-2 py-0.5 rounded-full">${roleLabel}</span></p>
+            <p class="text-[10px] text-slate-500"><span class="font-mono">${t.teacherId}</span>${t.assignedClass ? ' · '+t.assignedClass : ''}${t.email ? ' · '+t.email : ''}</p>
+          </div>
+          <button data-edit="${t.teacherId}" class="btn-edit text-xs text-[#185FA5] border border-[#185FA5] px-2.5 py-1.5 rounded-md hover:bg-blue-50 flex-shrink-0">แก้ไข</button>
+          <button data-reset="${t.teacherId}" class="btn-reset text-xs text-[#BA7517] border border-[#EF9F27] px-2.5 py-1.5 rounded-md hover:bg-amber-50 flex-shrink-0">รีเซ็ตรหัส</button>
+          <button data-del="${t.teacherId}" data-name="${t.firstName}" class="btn-del text-xs text-[#E24B4A] border border-[#E24B4A] px-2.5 py-1.5 rounded-md hover:bg-red-50 flex-shrink-0">ลบ</button>
+        </div>`;
+      }).join('');
+
+      document.querySelectorAll('.btn-edit').forEach(b => b.addEventListener('click', function() { editTeacher(this.getAttribute('data-edit')); }));
+      document.querySelectorAll('.btn-reset').forEach(b => b.addEventListener('click', function() { resetPassword(this.getAttribute('data-reset')); }));
+      document.querySelectorAll('.btn-del').forEach(b => b.addEventListener('click', function() { deleteTeacher(this.getAttribute('data-del'), this.getAttribute('data-name')); }));
+    }
+
+    async function saveTeacher() {
+      hideError();
+      const teacherId = document.getElementById('teacherId').value.trim();
+      const firstName = document.getElementById('firstName').value.trim();
+      if (!teacherId || !firstName) { showError('กรุณากรอกรหัสและชื่อครู'); return; }
+
+      const payload = {
+        action: editingId ? 'updateTeacher' : 'addTeacher',
+        teacherId: teacherId,
+        prefix: document.getElementById('prefix').value,
+        firstName: firstName,
+        lastName: document.getElementById('lastName').value.trim(),
+        role: document.getElementById('role').value,
+        assignedClass: document.getElementById('assignedClass').value,
+        email: document.getElementById('email').value.trim(),
+        phone: document.getElementById('phone').value.trim()
+      };
+
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+      try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.success) {
+          if (data.message) alert(data.message);
+          resetForm(); loadTeachers();
+        } else showError(data.error || 'บันทึกไม่สำเร็จ');
+      } catch (err) { showError('เชื่อมต่อระบบไม่ได้'); }
+      btn.disabled = false; btn.textContent = 'บันทึก';
+    }
+
+    function editTeacher(id) {
+      const t = teachers.find(x => String(x.teacherId) === String(id));
+      if (!t) { alert('ไม่พบครู'); return; }
+      editingId = id;
+      const setVal = (elId, val) => { const el = document.getElementById(elId); if (el) el.value = (val != null) ? val : ''; };
+      setVal('teacherId', t.teacherId);
+      const tid = document.getElementById('teacherId');
+      if (tid) { tid.readOnly = true; tid.classList.add('bg-slate-100'); }
+      setVal('prefix', t.prefix || 'นาย');
+      setVal('firstName', t.firstName);
+      setVal('lastName', t.lastName);
+      setVal('role', t.role || 'Homeroom');
+      setVal('assignedClass', t.assignedClass);
+      setVal('email', t.email);
+      setVal('phone', t.phone);
+      const title = document.getElementById('formTitle');
+      if (title) title.innerHTML = '<i class="ti ti-edit"></i> กำลังแก้ไข: ' + t.prefix + t.firstName + ' ' + t.lastName;
+      document.getElementById('cancelBtn').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function cancelEdit() { resetForm(); }
+
+    function resetForm() {
+      editingId = null;
+      ['teacherId','firstName','lastName','email','phone'].forEach(id => document.getElementById(id).value = '');
+      const tid = document.getElementById('teacherId');
+      tid.readOnly = false; tid.classList.remove('bg-slate-100');
+      document.getElementById('formTitle').innerHTML = '<i class="ti ti-user-plus"></i> เพิ่มครูใหม่';
+      document.getElementById('cancelBtn').classList.add('hidden');
+      hideError();
+    }
+
+    async function deleteTeacher(id, name) {
+      if (!confirm('ต้องการลบครู "' + name + '" ใช่หรือไม่?')) return;
+      try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteTeacher', teacherId: id }) });
+        const data = await res.json();
+        if (data.success) loadTeachers();
+        else alert('ลบไม่สำเร็จ: ' + (data.error || ''));
+      } catch (err) { alert('เชื่อมต่อระบบไม่ได้'); }
+    }
+
+    async function resetPassword(id) {
+      if (!confirm('รีเซ็ตรหัสผ่านครู ' + id + ' เป็นรหัสครู (ครูต้องเปลี่ยนใหม่ตอน login)?')) return;
+      try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'resetTeacherPassword', teacherId: id }) });
+        const data = await res.json();
+        alert(data.success ? data.message : ('ไม่สำเร็จ: ' + (data.error || '')));
+      } catch (err) { alert('เชื่อมต่อระบบไม่ได้'); }
+    }
+
+    loadClasses();
+    loadTeachers();
+  </script>
+
+</body>
+</html>
