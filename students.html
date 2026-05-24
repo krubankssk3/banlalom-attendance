@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จัดการนักเรียน - โรงเรียนบ้านละลม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.5.0/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Sarabun', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <div class="max-w-3xl mx-auto p-4">
+
+    <a href="admin.html" class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 mb-3">
+      <i class="ti ti-arrow-left"></i> กลับ Dashboard
+    </a>
+
+    <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+
+      <div class="bg-gradient-to-br from-[#042C53] to-[#185FA5] p-4 text-white flex items-center justify-between">
+        <div>
+          <p class="text-base font-medium">จัดการนักเรียน</p>
+          <p class="text-xs text-blue-200 mt-1">เพิ่ม แก้ไข ลบ ข้อมูลนักเรียน</p>
+        </div>
+        <div class="flex gap-1.5 bg-white/10 rounded-lg p-1">
+          <button id="tabSingle" onclick="switchTab('single')" class="px-3 py-1.5 rounded-md text-xs font-medium bg-white text-[#042C53]">ทีละคน</button>
+          <button id="tabBulk" onclick="switchTab('bulk')" class="px-3 py-1.5 rounded-md text-xs font-medium text-white">วางจาก Excel</button>
+        </div>
+      </div>
+
+      <!-- โหมดทีละคน -->
+      <div id="singleMode" class="p-4 bg-slate-50 border-b border-slate-100">
+        <p id="formTitle" class="text-xs font-medium text-[#185FA5] mb-3"><i class="ti ti-user-plus"></i> เพิ่มนักเรียนใหม่</p>
+        <div id="formError" class="hidden mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"></div>
+
+        <div class="grid grid-cols-4 gap-2 mb-2">
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">รหัสนักเรียน</label>
+            <input type="text" id="studentId" placeholder="24009" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none font-mono"/>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">คำนำหน้า</label>
+            <select id="prefix" class="w-full h-9 px-1 text-xs border border-slate-200 rounded outline-none">
+              <option>ด.ช.</option><option>ด.ญ.</option><option>นาย</option><option>น.ส.</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">ชื่อ</label>
+            <input type="text" id="firstName" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none"/>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">นามสกุล</label>
+            <input type="text" id="lastName" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none"/>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2 mb-2">
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">ชื่อเล่น</label>
+            <input type="text" id="nickName" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none"/>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">เพศ</label>
+            <select id="gender" class="w-full h-9 px-1 text-xs border border-slate-200 rounded outline-none">
+              <option value="male">ชาย</option><option value="female">หญิง</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">เลขที่</label>
+            <input type="number" id="number" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none"/>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">ห้องเรียน</label>
+            <select id="classId" class="w-full h-9 px-1 text-xs border border-slate-200 rounded outline-none">
+              <option value="">-- เลือก --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">ชื่อผู้ปกครอง</label>
+            <input type="text" id="parentName" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none"/>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">เบอร์ผู้ปกครอง</label>
+            <input type="tel" id="parentPhone" placeholder="08xxxxxxxx" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none"/>
+          </div>
+        </div>
+
+        <div class="flex gap-1.5">
+          <button id="saveBtn" onclick="saveStudent()" class="flex-1 h-9 text-xs bg-[#1D9E75] hover:bg-[#0F6E56] text-white rounded font-medium">บันทึก</button>
+          <button id="cancelBtn" onclick="cancelEdit()" class="hidden h-9 px-3 text-xs bg-slate-200 text-slate-600 rounded">ยกเลิก</button>
+        </div>
+      </div>
+
+      <!-- โหมดวางจาก Excel -->
+      <div id="bulkMode" class="hidden p-4 bg-slate-50 border-b border-slate-100">
+        <p class="text-xs font-medium text-[#185FA5] mb-2"><i class="ti ti-table"></i> วางข้อมูลจาก Excel</p>
+        <p class="text-[11px] text-slate-500 mb-2">คัดลอกจาก Excel แล้ววางด้านล่าง (คอลัมน์: รหัส | คำนำหน้า | ชื่อ | นามสกุล | ชื่อเล่น | เพศ | เลขที่ | ห้อง)</p>
+        <textarea id="bulkData" rows="6" placeholder="24009	ด.ช.	สมชาย	ใจดี	ชาย	male	1	M1-1
+24010	ด.ญ.	สมหญิง	รักเรียน	หญิง	female	2	M1-1" class="w-full p-2 text-xs border border-slate-200 rounded outline-none font-mono"></textarea>
+        <button onclick="bulkImport()" class="w-full h-9 mt-2 text-xs bg-[#185FA5] hover:bg-[#0C447C] text-white rounded font-medium">นำเข้าทั้งหมด</button>
+        <div id="bulkResult" class="hidden mt-2 p-2 rounded text-xs"></div>
+      </div>
+
+      <!-- รายการ -->
+      <div class="p-4">
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-xs text-slate-500">นักเรียน (<span id="stuCount">0</span> คน)</p>
+          <select id="filterClass" onchange="loadStudents()" class="h-8 px-2 text-xs border border-slate-200 rounded outline-none">
+            <option value="">ทุกห้อง</option>
+          </select>
+        </div>
+        <div id="studentList" class="space-y-2">
+          <div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyZB1sqZKu_--r5_mwf9RCJm4u9cTjzrOMToh_ULv22lw81oRZ3U9if0YxkV_nNhWhesw/exec';
+
+    const user = JSON.parse(localStorage.getItem('banlalom_user') || '{}');
+    if (!user.id) window.location.href = 'login.html';
+
+    let students = [];
+    let editingId = null;
+
+    function switchTab(tab) {
+      const single = tab === 'single';
+      document.getElementById('singleMode').classList.toggle('hidden', !single);
+      document.getElementById('bulkMode').classList.toggle('hidden', single);
+      document.getElementById('tabSingle').className = 'px-3 py-1.5 rounded-md text-xs font-medium ' + (single ? 'bg-white text-[#042C53]' : 'text-white');
+      document.getElementById('tabBulk').className = 'px-3 py-1.5 rounded-md text-xs font-medium ' + (single ? 'text-white' : 'bg-white text-[#042C53]');
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('formError');
+      el.classList.remove('hidden');
+      el.textContent = msg;
+    }
+    function hideError() { document.getElementById('formError').classList.add('hidden'); }
+
+    async function loadClasses() {
+      try {
+        const res = await fetch(API_URL + '?action=getClasses');
+        const data = await res.json();
+        if (data.success) {
+          const opts = '<option value="">-- เลือก --</option>' +
+            data.data.map(c => `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`).join('');
+          document.getElementById('classId').innerHTML = opts;
+          document.getElementById('filterClass').innerHTML = '<option value="">ทุกห้อง</option>' +
+            data.data.map(c => `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`).join('');
+        }
+      } catch (err) {}
+    }
+
+    async function loadStudents() {
+      const filterClass = document.getElementById('filterClass').value;
+      const url = API_URL + '?action=getStudentsManage' + (filterClass ? '&classId=' + encodeURIComponent(filterClass) : '');
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.success) {
+          students = data.data;
+          renderStudents();
+        }
+      } catch (err) {
+        document.getElementById('studentList').innerHTML = '<div class="text-center text-sm text-red-500 py-6">โหลดไม่สำเร็จ</div>';
+      }
+    }
+
+    function renderStudents() {
+      const list = document.getElementById('studentList');
+      document.getElementById('stuCount').textContent = students.length;
+      if (!students.length) {
+        list.innerHTML = '<div class="text-center text-sm text-slate-400 py-6"><i class="ti ti-users-group text-2xl block mb-2"></i>ยังไม่มีนักเรียน เพิ่มคนแรกได้เลย</div>';
+        return;
+      }
+      list.innerHTML = students.map(s => `
+        <div class="flex items-center gap-3 p-2.5 border border-slate-100 rounded-lg">
+          <div class="w-9 h-9 rounded-full bg-blue-50 text-[#185FA5] flex items-center justify-center text-xs font-medium flex-shrink-0">${s.number || '?'}</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">${s.prefix}${s.firstName} ${s.lastName} ${s.nickName ? '('+s.nickName+')' : ''}</p>
+            <p class="text-[10px] text-slate-500">${s.classId} · เลขที่ ${s.number} · <span class="font-mono">${s.studentId}</span>${s.parentPhone ? ' · ☎ '+s.parentPhone : ''}</p>
+          </div>
+          <button onclick="editStudent('${s.studentId}')" class="text-[#185FA5] p-1"><i class="ti ti-edit text-[15px]"></i></button>
+          <button onclick="deleteStudent('${s.studentId}','${s.firstName}')" class="text-[#E24B4A] p-1"><i class="ti ti-trash text-[15px]"></i></button>
+        </div>`).join('');
+    }
+
+    async function saveStudent() {
+      hideError();
+      const studentId = document.getElementById('studentId').value.trim();
+      const firstName = document.getElementById('firstName').value.trim();
+      if (!studentId || !firstName) { showError('กรุณากรอกรหัสและชื่อนักเรียน'); return; }
+
+      const payload = {
+        action: editingId ? 'updateStudent' : 'addStudent',
+        studentId: studentId,
+        prefix: document.getElementById('prefix').value,
+        firstName: firstName,
+        lastName: document.getElementById('lastName').value.trim(),
+        nickName: document.getElementById('nickName').value.trim(),
+        gender: document.getElementById('gender').value,
+        number: document.getElementById('number').value,
+        classId: document.getElementById('classId').value,
+        parentName: document.getElementById('parentName').value.trim(),
+        parentPhone: document.getElementById('parentPhone').value.trim()
+      };
+
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+      try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.success) { resetForm(); loadStudents(); }
+        else showError(data.error || 'บันทึกไม่สำเร็จ');
+      } catch (err) { showError('เชื่อมต่อระบบไม่ได้'); }
+      btn.disabled = false; btn.textContent = 'บันทึก';
+    }
+
+    function editStudent(id) {
+      const s = students.find(x => x.studentId === id);
+      if (!s) return;
+      editingId = id;
+      document.getElementById('studentId').value = s.studentId;
+      document.getElementById('studentId').readOnly = true;
+      document.getElementById('studentId').classList.add('bg-slate-100');
+      document.getElementById('prefix').value = s.prefix || 'ด.ช.';
+      document.getElementById('firstName').value = s.firstName;
+      document.getElementById('lastName').value = s.lastName;
+      document.getElementById('nickName').value = s.nickName || '';
+      document.getElementById('gender').value = s.gender || 'male';
+      document.getElementById('number').value = s.number || '';
+      document.getElementById('classId').value = s.classId || '';
+      document.getElementById('parentName').value = s.parentName || '';
+      document.getElementById('parentPhone').value = s.parentPhone || '';
+      document.getElementById('formTitle').innerHTML = '<i class="ti ti-edit"></i> แก้ไขข้อมูลนักเรียน';
+      document.getElementById('cancelBtn').classList.remove('hidden');
+      switchTab('single');
+      window.scrollTo(0, 0);
+    }
+
+    function cancelEdit() { resetForm(); }
+
+    function resetForm() {
+      editingId = null;
+      ['studentId','firstName','lastName','nickName','number','parentName','parentPhone'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('studentId').readOnly = false;
+      document.getElementById('studentId').classList.remove('bg-slate-100');
+      document.getElementById('formTitle').innerHTML = '<i class="ti ti-user-plus"></i> เพิ่มนักเรียนใหม่';
+      document.getElementById('cancelBtn').classList.add('hidden');
+      hideError();
+    }
+
+    async function deleteStudent(id, name) {
+      if (!confirm('ต้องการลบนักเรียน "' + name + '" ใช่หรือไม่?')) return;
+      try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteStudent', studentId: id }) });
+        const data = await res.json();
+        if (data.success) loadStudents();
+        else alert('ลบไม่สำเร็จ: ' + (data.error || ''));
+      } catch (err) { alert('เชื่อมต่อระบบไม่ได้'); }
+    }
+
+    async function bulkImport() {
+      const raw = document.getElementById('bulkData').value.trim();
+      if (!raw) { alert('กรุณาวางข้อมูล'); return; }
+      const lines = raw.split('\n').filter(l => l.trim());
+      const rows = lines.map(line => {
+        const c = line.split('\t');
+        return {
+          studentId: (c[0]||'').trim(), prefix: (c[1]||'').trim(),
+          firstName: (c[2]||'').trim(), lastName: (c[3]||'').trim(),
+          nickName: (c[4]||'').trim(), gender: (c[5]||'').trim(),
+          number: (c[6]||'').trim(), classId: (c[7]||'').trim()
+        };
+      });
+
+      const resultEl = document.getElementById('bulkResult');
+      resultEl.className = 'mt-2 p-2 rounded text-xs bg-blue-50 text-blue-700';
+      resultEl.classList.remove('hidden');
+      resultEl.textContent = 'กำลังนำเข้า ' + rows.length + ' คน...';
+
+      try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'bulkAddStudents', rows: rows }) });
+        const data = await res.json();
+        if (data.success) {
+          resultEl.className = 'mt-2 p-2 rounded text-xs bg-green-50 text-green-700';
+          resultEl.textContent = '✓ ' + data.message;
+          document.getElementById('bulkData').value = '';
+          loadStudents();
+        } else {
+          resultEl.className = 'mt-2 p-2 rounded text-xs bg-red-50 text-red-700';
+          resultEl.textContent = data.error || 'นำเข้าไม่สำเร็จ';
+        }
+      } catch (err) {
+        resultEl.className = 'mt-2 p-2 rounded text-xs bg-red-50 text-red-700';
+        resultEl.textContent = 'เชื่อมต่อระบบไม่ได้';
+      }
+    }
+
+    loadClasses();
+    loadStudents();
+  </script>
+
+</body>
+</html>
