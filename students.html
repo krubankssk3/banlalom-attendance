@@ -236,25 +236,37 @@
     }
 
     function editStudent(id) {
-      const s = students.find(x => x.studentId === id);
-      if (!s) return;
+      const s = students.find(x => String(x.studentId) === String(id));
+      if (!s) { alert('ไม่พบข้อมูลนักเรียน'); return; }
       editingId = id;
-      document.getElementById('studentId').value = s.studentId;
-      document.getElementById('studentId').readOnly = true;
-      document.getElementById('studentId').classList.add('bg-slate-100');
-      document.getElementById('prefix').value = s.prefix || 'ด.ช.';
-      document.getElementById('firstName').value = s.firstName;
-      document.getElementById('lastName').value = s.lastName;
-      document.getElementById('nickName').value = s.nickName || '';
-      document.getElementById('gender').value = s.gender || 'male';
-      document.getElementById('number').value = s.number || '';
-      document.getElementById('classId').value = s.classId || '';
-      document.getElementById('parentName').value = s.parentName || '';
-      document.getElementById('parentPhone').value = s.parentPhone || '';
-      document.getElementById('formTitle').innerHTML = '<i class="ti ti-edit"></i> แก้ไขข้อมูลนักเรียน';
-      document.getElementById('cancelBtn').classList.remove('hidden');
+
+      // สลับมาแท็บทีละคนก่อน (ให้ฟอร์มแสดง)
       switchTab('single');
-      window.scrollTo(0, 0);
+
+      const setVal = function(elId, val) {
+        const el = document.getElementById(elId);
+        if (el) el.value = (val !== undefined && val !== null) ? val : '';
+      };
+
+      setVal('studentId', s.studentId);
+      const sidEl = document.getElementById('studentId');
+      if (sidEl) { sidEl.readOnly = true; sidEl.classList.add('bg-slate-100'); }
+      setVal('prefix', s.prefix || 'ด.ช.');
+      setVal('firstName', s.firstName);
+      setVal('lastName', s.lastName);
+      setVal('nickName', s.nickName);
+      setVal('gender', s.gender || 'male');
+      setVal('number', s.number);
+      setVal('classId', s.classId);
+      setVal('parentName', s.parentName);
+      setVal('parentPhone', s.parentPhone);
+
+      const title = document.getElementById('formTitle');
+      if (title) title.innerHTML = '<i class="ti ti-edit"></i> กำลังแก้ไข: ' + s.prefix + s.firstName + ' ' + s.lastName;
+      const cancel = document.getElementById('cancelBtn');
+      if (cancel) cancel.classList.remove('hidden');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function cancelEdit() { resetForm(); }
