@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายงานการมาเรียน - โรงเรียนบ้านละลม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.5.0/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Sarabun', sans-serif; }
+    @media print { .no-print { display: none !important; } body { background: white; } }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <div class="max-w-3xl mx-auto p-4">
+
+    <a href="admin.html" class="no-print inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 mb-3">
+      <i class="ti ti-arrow-left"></i> กลับ Dashboard
+    </a>
+
+    <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+
+      <div class="bg-gradient-to-br from-[#042C53] to-[#185FA5] p-4 text-white">
+        <p class="text-base font-medium">รายงานการมาเรียน</p>
+        <p class="text-xs text-blue-200 mt-1">สรุปสถิติการเช็คชื่อ</p>
+      </div>
+
+      <!-- แท็บ -->
+      <div class="no-print flex border-b border-slate-100">
+        <button id="tab-daily" onclick="switchTab('daily')" class="flex-1 py-3 text-xs font-medium border-b-2 border-[#185FA5] text-[#185FA5]">รายวัน</button>
+        <button id="tab-student" onclick="switchTab('student')" class="flex-1 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500">รายคน</button>
+        <button id="tab-class" onclick="switchTab('class')" class="flex-1 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500">รายห้อง</button>
+      </div>
+
+      <!-- ===== มุมรายวัน ===== -->
+      <div id="view-daily" class="p-4">
+        <div class="no-print flex gap-2 mb-4">
+          <input type="date" id="dailyDate" class="flex-1 h-10 px-3 text-sm border border-slate-200 rounded-lg outline-none"/>
+          <button onclick="loadDaily()" class="px-4 bg-[#185FA5] text-white rounded-lg text-sm font-medium">ดู</button>
+        </div>
+        <div id="dailyResult"><div class="text-center text-sm text-slate-400 py-6">เลือกวันที่แล้วกดดู</div></div>
+      </div>
+
+      <!-- ===== มุมรายคน ===== -->
+      <div id="view-student" class="hidden p-4">
+        <div class="no-print flex gap-2 mb-4">
+          <select id="studentSelect" class="flex-1 h-10 px-3 text-sm border border-slate-200 rounded-lg outline-none">
+            <option value="">-- เลือกนักเรียน --</option>
+          </select>
+          <button onclick="loadStudent()" class="px-4 bg-[#185FA5] text-white rounded-lg text-sm font-medium">ดู</button>
+        </div>
+        <div id="studentResult"><div class="text-center text-sm text-slate-400 py-6">เลือกนักเรียนแล้วกดดู</div></div>
+      </div>
+
+      <!-- ===== มุมรายห้อง ===== -->
+      <div id="view-class" class="hidden p-4">
+        <div class="no-print grid grid-cols-3 gap-2 mb-4">
+          <select id="classReportSelect" class="h-10 px-2 text-sm border border-slate-200 rounded-lg outline-none">
+            <option value="">-- เลือกห้อง --</option>
+          </select>
+          <input type="month" id="reportMonth" class="h-10 px-2 text-sm border border-slate-200 rounded-lg outline-none"/>
+          <button onclick="loadClassReport()" class="bg-[#185FA5] text-white rounded-lg text-sm font-medium">ดู</button>
+        </div>
+        <div id="classResult"><div class="text-center text-sm text-slate-400 py-6">เลือกห้องแล้วกดดู</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyZB1sqZKu_--r5_mwf9RCJm4u9cTjzrOMToh_ULv22lw81oRZ3U9if0YxkV_nNhWhesw/exec';
+    const user = JSON.parse(localStorage.getItem('banlalom_user') || '{}');
+    if (!user.id) window.location.href = 'login.html';
+
+    const today = new Date().toISOString().slice(0, 10);
+    const thisMonth = today.slice(0, 7);
+
+    function switchTab(tab) {
+      ['daily','student','class'].forEach(t => {
+        document.getElementById('view-' + t).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById('tab-' + t);
+        if (t === tab) { btn.className = 'flex-1 py-3 text-xs font-medium border-b-2 border-[#185FA5] text-[#185FA5]'; }
+        else { btn.className = 'flex-1 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500'; }
+      });
+    }
+
+    // ----- โหลด dropdown -----
+    async function loadDropdowns() {
+      try {
+        const cRes = await fetch(API_URL + '?action=getClasses');
+        const cData = await cRes.json();
+        if (cData.success) {
+          const opts = cData.data.map(c => `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`).join('');
+          document.getElementById('classReportSelect').innerHTML = '<option value="">-- เลือกห้อง --</option>' + opts;
+        }
+        const sRes = await fetch(API_URL + '?action=getStudentsManage');
+        const sData = await sRes.json();
+        if (sData.success) {
+          document.getElementById('studentSelect').innerHTML = '<option value="">-- เลือกนักเรียน --</option>' +
+            sData.data.map(s => `<option value="${s.studentId}">${s.prefix}${s.firstName} ${s.lastName} (${s.classId})</option>`).join('');
+        }
+      } catch (err) {}
+    }
+
+    // ----- รายวัน -----
+    const STATUS_INFO = [
+      { key: 'present', label: 'มา', color: '#1D9E75' },
+      { key: 'late', label: 'สาย', color: '#EF9F27' },
+      { key: 'leave_personal', label: 'ลากิจ', color: '#534AB7' },
+      { key: 'leave_sick', label: 'ลาป่วย', color: '#185FA5' },
+      { key: 'absent', label: 'ขาด', color: '#E24B4A' },
+    ];
+
+    async function loadDaily() {
+      const date = document.getElementById('dailyDate').value || today;
+      const el = document.getElementById('dailyResult');
+      el.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>';
+      try {
+        const res = await fetch(API_URL + '?action=reportDaily&date=' + date);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        const cards = STATUS_INFO.map(s => `
+          <div class="text-center p-3 rounded-lg border border-slate-100">
+            <p class="text-2xl font-medium" style="color:${s.color}">${data.summary[s.key] || 0}</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">${s.label}</p>
+          </div>`).join('');
+
+        let absentHtml = '';
+        if (data.absentList.length) {
+          absentHtml = '<p class="text-xs font-medium text-slate-700 mt-4 mb-2">รายชื่อที่ขาด/ลา</p>' +
+            data.absentList.map(a => `
+              <div class="flex items-center justify-between p-2 border border-slate-100 rounded-lg mb-1.5">
+                <span class="text-xs">${a.name} <span class="text-slate-400">(${a.classId})</span></span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-50 text-red-700">${a.statusLabel}</span>
+              </div>`).join('');
+        } else {
+          absentHtml = '<p class="text-center text-xs text-[#1D9E75] mt-4">ไม่มีนักเรียนขาด/ลาในวันนี้</p>';
+        }
+
+        el.innerHTML = `
+          <p class="text-xs text-slate-500 mb-2">เช็คชื่อทั้งหมด ${data.total} คน</p>
+          <div class="grid grid-cols-5 gap-2">${cards}</div>
+          ${absentHtml}`;
+      } catch (err) {
+        el.innerHTML = '<div class="text-center text-sm text-red-500 py-6">' + (err.message || 'โหลดไม่สำเร็จ') + '</div>';
+      }
+    }
+
+    // ----- รายคน -----
+    async function loadStudent() {
+      const studentId = document.getElementById('studentSelect').value;
+      if (!studentId) { alert('เลือกนักเรียน'); return; }
+      const el = document.getElementById('studentResult');
+      el.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>';
+      try {
+        const res = await fetch(API_URL + '?action=reportStudent&studentId=' + encodeURIComponent(studentId));
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        const cards = STATUS_INFO.map(s => `
+          <div class="text-center p-3 rounded-lg border border-slate-100">
+            <p class="text-2xl font-medium" style="color:${s.color}">${data.summary[s.key] || 0}</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">${s.label}</p>
+          </div>`).join('');
+
+        el.innerHTML = `
+          <div class="bg-slate-50 rounded-lg p-3 mb-3">
+            <p class="text-sm font-medium">${data.student.name} ${data.student.nickName ? '('+data.student.nickName+')' : ''}</p>
+            <p class="text-xs text-slate-500">${data.student.classId} · เลขที่ ${data.student.number}</p>
+          </div>
+          <div class="flex items-center justify-between mb-3 p-3 bg-blue-50 rounded-lg">
+            <span class="text-sm text-blue-900">อัตราการมาเรียน</span>
+            <span class="text-xl font-medium text-[#185FA5]">${data.attendanceRate}%</span>
+          </div>
+          <div class="grid grid-cols-5 gap-2">${cards}</div>
+          <p class="text-[11px] text-slate-400 mt-2 text-center">จากทั้งหมด ${data.totalDays} วันที่เช็คชื่อ</p>`;
+      } catch (err) {
+        el.innerHTML = '<div class="text-center text-sm text-red-500 py-6">' + (err.message || 'โหลดไม่สำเร็จ') + '</div>';
+      }
+    }
+
+    // ----- รายห้อง -----
+    async function loadClassReport() {
+      const classId = document.getElementById('classReportSelect').value;
+      const month = document.getElementById('reportMonth').value;
+      if (!classId) { alert('เลือกห้อง'); return; }
+      const el = document.getElementById('classResult');
+      el.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>';
+      try {
+        let url = API_URL + '?action=reportClass&classId=' + encodeURIComponent(classId);
+        if (month) url += '&month=' + month;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        if (!data.students.length) {
+          el.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">ไม่มีนักเรียนในห้องนี้</div>';
+          return;
+        }
+
+        const rows = data.students.map(s => `
+          <tr class="border-b border-slate-50">
+            <td class="py-2 px-1 text-xs text-slate-400">${s.number}</td>
+            <td class="py-2 px-1 text-xs">${s.name}</td>
+            <td class="py-2 px-1 text-center text-xs text-[#1D9E75]">${s.present}</td>
+            <td class="py-2 px-1 text-center text-xs text-[#BA7517]">${s.late}</td>
+            <td class="py-2 px-1 text-center text-xs text-[#534AB7]">${s.leave}</td>
+            <td class="py-2 px-1 text-center text-xs text-[#E24B4A]">${s.absent}</td>
+          </tr>`).join('');
+
+        el.innerHTML = `
+          <p class="text-xs text-slate-500 mb-2">ห้อง ${data.classId} · เดือน ${data.month}</p>
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-slate-200 text-[10px] text-slate-500">
+                <th class="py-2 px-1 text-left">เลขที่</th>
+                <th class="py-2 px-1 text-left">ชื่อ</th>
+                <th class="py-2 px-1">มา</th>
+                <th class="py-2 px-1">สาย</th>
+                <th class="py-2 px-1">ลา</th>
+                <th class="py-2 px-1">ขาด</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <button onclick="window.print()" class="no-print w-full mt-3 h-9 text-xs bg-[#1D9E75] text-white rounded font-medium"><i class="ti ti-printer"></i> พิมพ์รายงาน</button>`;
+      } catch (err) {
+        el.innerHTML = '<div class="text-center text-sm text-red-500 py-6">' + (err.message || 'โหลดไม่สำเร็จ') + '</div>';
+      }
+    }
+
+    // เริ่มต้น
+    document.getElementById('dailyDate').value = today;
+    document.getElementById('reportMonth').value = thisMonth;
+    loadDropdowns();
+    loadDaily();
+  </script>
+
+</body>
+</html>
