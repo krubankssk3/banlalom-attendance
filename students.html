@@ -189,9 +189,19 @@
             <p class="text-sm font-medium truncate">${s.prefix}${s.firstName} ${s.lastName} ${s.nickName ? '('+s.nickName+')' : ''}</p>
             <p class="text-[10px] text-slate-500">${s.classId} · เลขที่ ${s.number} · <span class="font-mono">${s.studentId}</span>${s.parentPhone ? ' · โทร '+s.parentPhone : ''}</p>
           </div>
-          <button onclick="editStudent('${s.studentId}')" class="flex items-center gap-1 text-xs text-[#185FA5] border border-[#185FA5] px-2.5 py-1.5 rounded-md hover:bg-blue-50 flex-shrink-0"><i class="ti ti-edit"></i> แก้ไข</button>
-          <button onclick="deleteStudent('${s.studentId}','${s.firstName}')" class="flex items-center gap-1 text-xs text-[#E24B4A] border border-[#E24B4A] px-2.5 py-1.5 rounded-md hover:bg-red-50 flex-shrink-0"><i class="ti ti-trash"></i> ลบ</button>
+          <button data-edit="${s.studentId}" class="btn-edit flex items-center gap-1 text-xs text-[#185FA5] border border-[#185FA5] px-2.5 py-1.5 rounded-md hover:bg-blue-50 flex-shrink-0"><i class="ti ti-edit"></i> แก้ไข</button>
+          <button data-del="${s.studentId}" data-name="${s.firstName}" class="btn-del flex items-center gap-1 text-xs text-[#E24B4A] border border-[#E24B4A] px-2.5 py-1.5 rounded-md hover:bg-red-50 flex-shrink-0"><i class="ti ti-trash"></i> ลบ</button>
         </div>`).join('');
+
+      // ผูกปุ่มด้วย event listener (ทนทานกว่า onclick inline)
+      document.querySelectorAll('.btn-edit').forEach(function(btn) {
+        btn.addEventListener('click', function() { editStudent(this.getAttribute('data-edit')); });
+      });
+      document.querySelectorAll('.btn-del').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          deleteStudent(this.getAttribute('data-del'), this.getAttribute('data-name'));
+        });
+      });
     }
 
     async function saveStudent() {
