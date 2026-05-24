@@ -187,10 +187,10 @@
           <div class="w-9 h-9 rounded-full bg-blue-50 text-[#185FA5] flex items-center justify-center text-xs font-medium flex-shrink-0">${s.number || '?'}</div>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium truncate">${s.prefix}${s.firstName} ${s.lastName} ${s.nickName ? '('+s.nickName+')' : ''}</p>
-            <p class="text-[10px] text-slate-500">${s.classId} · เลขที่ ${s.number} · <span class="font-mono">${s.studentId}</span>${s.parentPhone ? ' · ☎ '+s.parentPhone : ''}</p>
+            <p class="text-[10px] text-slate-500">${s.classId} · เลขที่ ${s.number} · <span class="font-mono">${s.studentId}</span>${s.parentPhone ? ' · โทร '+s.parentPhone : ''}</p>
           </div>
-          <button onclick="editStudent('${s.studentId}')" class="text-[#185FA5] p-1"><i class="ti ti-edit text-[15px]"></i></button>
-          <button onclick="deleteStudent('${s.studentId}','${s.firstName}')" class="text-[#E24B4A] p-1"><i class="ti ti-trash text-[15px]"></i></button>
+          <button onclick="editStudent('${s.studentId}')" class="flex items-center gap-1 text-xs text-[#185FA5] border border-[#185FA5] px-2.5 py-1.5 rounded-md hover:bg-blue-50 flex-shrink-0"><i class="ti ti-edit"></i> แก้ไข</button>
+          <button onclick="deleteStudent('${s.studentId}','${s.firstName}')" class="flex items-center gap-1 text-xs text-[#E24B4A] border border-[#E24B4A] px-2.5 py-1.5 rounded-md hover:bg-red-50 flex-shrink-0"><i class="ti ti-trash"></i> ลบ</button>
         </div>`).join('');
     }
 
