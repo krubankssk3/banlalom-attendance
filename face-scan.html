@@ -62,7 +62,10 @@
 
       <!-- รายชื่อที่เช็คแล้ววันนี้ -->
       <div class="p-4 border-t border-slate-100">
-        <p class="text-xs text-slate-500 mb-2">เช็คชื่อแล้ววันนี้ (<span id="checkedCount">0</span> คน)</p>
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs text-slate-500">เช็คชื่อแล้ววันนี้ (<span id="checkedCount">0</span> คน)</p>
+          <button onclick="sendNotify()" class="text-xs text-[#06C755] flex items-center gap-1"><i class="ti ti-brand-line"></i> ส่งสรุปเข้ากลุ่ม</button>
+        </div>
         <div id="checkedList" class="space-y-1.5"></div>
       </div>
 
@@ -174,6 +177,22 @@
         osc.connect(ctx.destination);
         osc.start(); osc.stop(ctx.currentTime + 0.1);
       } catch (e) {}
+    }
+
+    // ===== ส่งสรุปเข้ากลุ่ม LINE =====
+    async function sendNotify() {
+      const classId = document.getElementById('classSelect').value;
+      const period = document.getElementById('periodSelect').value;
+      if (!classId) { alert('เลือกห้องก่อน'); return; }
+      if (!confirm('ส่งสรุปการเช็คชื่อเข้ากลุ่ม LINE ผู้ปกครอง?')) return;
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'notifyClass', classId: classId, date: today, period: period })
+        });
+        const data = await res.json();
+        alert(data.success ? '✓ ' + data.message : 'ส่งไม่สำเร็จ: ' + (data.error || ''));
+      } catch (err) { alert('เชื่อมต่อระบบไม่ได้'); }
     }
 
     loadClasses();
