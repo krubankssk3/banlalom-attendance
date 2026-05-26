@@ -105,10 +105,14 @@
 
       const video = document.getElementById('video');
       const canvas = document.getElementById('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      const image = canvas.toDataURL('image/jpeg', 0.8);
+      // ย่อรูปให้กว้างไม่เกิน 640px (ใบหน้าชัดพอ ไฟล์เล็ก ส่งเร็ว)
+      let w = video.videoWidth, h = video.videoHeight;
+      const maxW = 640;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(video, 0, 0, w, h);
+      const image = canvas.toDataURL('image/jpeg', 0.85);
 
       const btn = document.getElementById('scanBtn');
       const result = document.getElementById('result');
