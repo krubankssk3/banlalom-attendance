@@ -64,11 +64,16 @@
       </div>
 
       <!-- Footer -->
-      <div id="footer" class="p-4 border-t border-slate-100 flex items-center justify-between hidden">
-        <div id="summary" class="flex gap-3 text-xs flex-wrap"></div>
-        <button id="saveBtn" onclick="saveAttendance()" class="text-sm px-6 py-2.5 bg-[#185FA5] hover:bg-[#0C447C] text-white rounded-lg font-medium">
-          <i class="ti ti-device-floppy"></i> <span id="saveText">บันทึก</span>
-        </button>
+      <div id="footer" class="p-4 border-t border-slate-100 hidden">
+        <div id="summary" class="flex gap-3 text-xs flex-wrap mb-3"></div>
+        <div class="flex gap-2">
+          <button id="notifyBtn" onclick="sendNotify()" class="flex-1 text-sm py-2.5 bg-[#06C755] hover:bg-[#04A045] text-white rounded-lg font-medium">
+            <i class="ti ti-brand-line"></i> <span id="notifyText">ส่งแจ้งผู้ปกครอง</span>
+          </button>
+          <button id="saveBtn" onclick="saveAttendance()" class="flex-1 text-sm py-2.5 bg-[#185FA5] hover:bg-[#0C447C] text-white rounded-lg font-medium">
+            <i class="ti ti-device-floppy"></i> <span id="saveText">บันทึก</span>
+          </button>
+        </div>
       </div>
 
     </div>
@@ -241,7 +246,8 @@
         });
         const data = await res.json();
         if (data.success) {
-          alert('บันทึกการเช็คชื่อสำเร็จ ' + data.saved + ' คน');
+          var lineMsg = data.lineSent ? '\n✓ ส่งแจ้งผู้ปกครองทาง LINE แล้ว' : '';
+          alert('บันทึกการเช็คชื่อสำเร็จ ' + data.saved + ' คน' + lineMsg);
         } else {
           alert('บันทึกไม่สำเร็จ: ' + (data.error || ''));
         }
@@ -250,6 +256,35 @@
       }
       btn.disabled = false;
       txt.textContent = 'บันทึก';
+    }
+
+    // ===== ส่งแจ้งผู้ปกครองแบบ manual =====
+    async function sendNotify() {
+      const classId = document.getElementById('classSelect').value;
+      if (!classId) { alert('เลือกห้องก่อน'); return; }
+      if (!confirm('ส่งสรุปการเช็คชื่อเข้ากลุ่ม LINE ผู้ปกครองห้องนี้?')) return;
+
+      const btn = document.getElementById('notifyBtn');
+      const txt = document.getElementById('notifyText');
+      btn.disabled = true;
+      txt.textContent = 'กำลังส่ง...';
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'notifyClass',
+            classId: classId,
+            date: today,
+            period: 'homeroom'
+          })
+        });
+        const data = await res.json();
+        alert(data.success ? '✓ ' + data.message : 'ส่งไม่สำเร็จ: ' + (data.error || ''));
+      } catch (err) {
+        alert('เชื่อมต่อระบบไม่ได้');
+      }
+      btn.disabled = false;
+      txt.textContent = 'ส่งแจ้งผู้ปกครอง';
     }
 
     loadClasses();
