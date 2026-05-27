@@ -52,6 +52,11 @@
     const API_URL = 'https://script.google.com/macros/s/AKfycbyZB1sqZKu_--r5_mwf9RCJm4u9cTjzrOMToh_ULv22lw81oRZ3U9if0YxkV_nNhWhesw/exec';
     const user = JSON.parse(localStorage.getItem('banlalom_user') || '{}');
     if (!user.id) window.location.href = 'login.html';
+    // หน้านี้เฉพาะผู้ดูแลระบบ
+    if (user.role && user.role !== 'Admin') {
+      alert('หน้านี้สำหรับผู้ดูแลระบบเท่านั้น');
+      window.location.href = 'admin.html';
+    }
 
     let classes = [];
 
