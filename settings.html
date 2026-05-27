@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตั้งค่าระบบ - โรงเรียนบ้านละลม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.5.0/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Sarabun', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <div class="max-w-lg mx-auto p-4">
+
+    <a href="admin.html" class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 mb-3">
+      <i class="ti ti-arrow-left"></i> กลับ Dashboard
+    </a>
+
+    <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+
+      <div class="bg-gradient-to-br from-[#042C53] to-[#185FA5] p-4 text-white">
+        <p class="text-base font-medium"><i class="ti ti-settings"></i> ตั้งค่าระบบ</p>
+        <p class="text-xs text-blue-200 mt-1">ปรับการตั้งค่าทั่วไปของระบบ</p>
+      </div>
+
+      <div id="loading" class="p-8 text-center text-sm text-slate-400">กำลังโหลด...</div>
+
+      <div id="form" class="hidden">
+        <!-- ข้อมูลโรงเรียน -->
+        <div class="p-4 border-b border-slate-100">
+          <p class="text-xs font-medium text-[#185FA5] mb-3"><i class="ti ti-school"></i> ข้อมูลโรงเรียน</p>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-[11px] text-slate-500 mb-1">ชื่อโรงเรียน</label>
+              <input type="text" id="school_name" class="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg outline-none focus:border-[#185FA5]"/>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-500 mb-1">ปีการศึกษา</label>
+              <input type="text" id="school_year" class="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg outline-none focus:border-[#185FA5]"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- เวลา -->
+        <div class="p-4 border-b border-slate-100">
+          <p class="text-xs font-medium text-[#185FA5] mb-3"><i class="ti ti-clock"></i> เวลาเรียน</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] text-slate-500 mb-1">เวลาเข้าเรียน</label>
+              <input type="time" id="time_start" class="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg outline-none focus:border-[#185FA5]"/>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-500 mb-1">เวลาที่ถือว่าสาย</label>
+              <input type="time" id="time_late" class="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg outline-none focus:border-[#185FA5]"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- เช็คชื่อ -->
+        <div class="p-4 border-b border-slate-100">
+          <p class="text-xs font-medium text-[#185FA5] mb-3"><i class="ti ti-checkup-list"></i> การเช็คชื่อ</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] text-slate-500 mb-1">อายุ QR Code (นาที)</label>
+              <input type="number" id="qr_expiry_minutes" class="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg outline-none focus:border-[#185FA5]"/>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-500 mb-1">เกณฑ์ความมั่นใจใบหน้า (%)</label>
+              <input type="number" id="face_confidence" class="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg outline-none focus:border-[#185FA5]"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- แจ้งเตือน -->
+        <div class="p-4 border-b border-slate-100">
+          <p class="text-xs font-medium text-[#185FA5] mb-3"><i class="ti ti-bell"></i> การแจ้งเตือน</p>
+          <label class="flex items-center justify-between p-3 bg-slate-50 rounded-lg cursor-pointer">
+            <span class="text-sm">เปิดใช้แจ้งเตือนผ่าน LINE</span>
+            <input type="checkbox" id="notify_line_enabled" class="w-5 h-5 accent-[#06C755]"/>
+          </label>
+          <div class="mt-3">
+            <label class="block text-[11px] text-slate-500 mb-1">แจ้งเตือนเมื่อขาดติดต่อกัน (วัน)</label>
+            <input type="number" id="absent_alert_days" class="w-full h-10 px-3 text-sm border border-slate-200 rounded-lg outline-none focus:border-[#185FA5]"/>
+          </div>
+        </div>
+
+        <!-- บันทึก -->
+        <div class="p-4">
+          <div id="result" class="hidden mb-3 p-2 rounded text-xs"></div>
+          <button id="saveBtn" onclick="saveSettings()" class="w-full h-11 bg-[#1D9E75] hover:bg-[#0F6E56] text-white rounded-lg text-sm font-medium">
+            <i class="ti ti-device-floppy"></i> บันทึกการตั้งค่า
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyZB1sqZKu_--r5_mwf9RCJm4u9cTjzrOMToh_ULv22lw81oRZ3U9if0YxkV_nNhWhesw/exec';
+    const user = JSON.parse(localStorage.getItem('banlalom_user') || '{}');
+    if (!user.id) window.location.href = 'login.html';
+    // หน้านี้เฉพาะผู้ดูแลระบบ
+    if (user.role && user.role !== 'Admin') {
+      alert('หน้านี้สำหรับผู้ดูแลระบบเท่านั้น');
+      window.location.href = 'admin.html';
+    }
+
+    // คีย์ที่เป็น text/number
+    const textKeys = ['school_name','school_year','time_start','time_late','qr_expiry_minutes','face_confidence','absent_alert_days'];
+
+    async function loadSettings() {
+      try {
+        const res = await fetch(API_URL + '?action=getSettings');
+        const data = await res.json();
+        if (data.success) {
+          textKeys.forEach(k => {
+            if (data.data[k] && document.getElementById(k)) {
+              document.getElementById(k).value = data.data[k].value;
+            }
+          });
+          // checkbox LINE
+          const lineEnabled = data.data['notify_line_enabled'];
+          if (lineEnabled) {
+            document.getElementById('notify_line_enabled').checked = String(lineEnabled.value) === 'true';
+          }
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('form').classList.remove('hidden');
+        }
+      } catch (err) {
+        document.getElementById('loading').textContent = 'โหลดไม่สำเร็จ';
+      }
+    }
+
+    async function saveSettings() {
+      const settings = {};
+      textKeys.forEach(k => {
+        const el = document.getElementById(k);
+        if (el) settings[k] = el.value;
+      });
+      settings['notify_line_enabled'] = document.getElementById('notify_line_enabled').checked ? 'true' : 'false';
+
+      const btn = document.getElementById('saveBtn');
+      const result = document.getElementById('result');
+      btn.disabled = true; btn.innerHTML = 'กำลังบันทึก...';
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'updateSettings', settings: settings })
+        });
+        const data = await res.json();
+        result.classList.remove('hidden');
+        if (data.success) {
+          result.className = 'mb-3 p-2 rounded text-xs bg-green-50 text-green-700';
+          result.textContent = '✓ ' + data.message;
+        } else {
+          result.className = 'mb-3 p-2 rounded text-xs bg-red-50 text-red-700';
+          result.textContent = data.error || 'บันทึกไม่สำเร็จ';
+        }
+      } catch (err) {
+        result.classList.remove('hidden');
+        result.className = 'mb-3 p-2 rounded text-xs bg-red-50 text-red-700';
+        result.textContent = 'เชื่อมต่อระบบไม่ได้';
+      }
+      btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> บันทึกการตั้งค่า';
+    }
+
+    loadSettings();
+  </script>
+
+</body>
+</html>
