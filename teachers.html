@@ -98,6 +98,11 @@
 
     const user = JSON.parse(localStorage.getItem('banlalom_user') || '{}');
     if (!user.id) window.location.href = 'login.html';
+    // หน้านี้เฉพาะผู้ดูแลระบบ
+    if (user.role && user.role !== 'Admin') {
+      alert('หน้านี้สำหรับผู้ดูแลระบบเท่านั้น');
+      window.location.href = 'admin.html';
+    }
 
     let teachers = [];
     let editingId = null;
