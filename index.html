@@ -3,126 +3,201 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>โรงเรียนบ้านละลม - ทดสอบระบบ</title>
+  <title>โรงเรียนบ้านละลม - สถิติการมาเรียน</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.5.0/tabler-icons.min.css">
-  <style>
-    body { font-family: 'Sarabun', sans-serif; }
-  </style>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Sarabun', sans-serif; } </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-50 min-h-screen">
 
-  <div class="w-full max-w-md">
-    <!-- การ์ดหลัก -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+  <!-- Header -->
+  <div class="bg-gradient-to-br from-[#042C53] to-[#185FA5] text-white">
+    <div class="max-w-4xl mx-auto px-4 py-6">
+      <div class="flex items-center gap-4">
+        <img id="schoolLogo" src="https://img2.pic.in.th/pic/Logo-7aecb8e321ff2955.png"
+             alt="โลโก้โรงเรียน" class="w-16 h-16 object-contain bg-white/10 rounded-xl p-1"
+             onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';"/>
+        <div id="logoFallback" class="w-16 h-16 rounded-xl bg-[#EF9F27] text-[#042C53] items-center justify-center text-3xl" style="display:none;">
+          <i class="ti ti-school"></i>
+        </div>
+        <div>
+          <h1 id="schoolName" class="text-xl font-medium">โรงเรียนบ้านละลม</h1>
+          <p class="text-xs text-blue-200 mt-0.5">สถิติการมาเรียนประจำวัน</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-      <!-- Header -->
-      <div class="bg-gradient-to-br from-[#042C53] to-[#185FA5] p-6 text-white text-center relative overflow-hidden">
-        <div class="absolute -top-8 -right-8 w-32 h-32 bg-amber-400/15 rounded-full"></div>
-        <div class="relative">
-          <div class="w-14 h-14 bg-white/15 rounded-full flex items-center justify-center mx-auto mb-3">
-            <i class="ti ti-school text-3xl"></i>
-          </div>
-          <h1 class="text-lg font-medium">โรงเรียนบ้านละลม</h1>
-          <p class="text-xs text-blue-200 mt-1">ทดสอบการเชื่อมต่อระบบ</p>
+  <div class="max-w-4xl mx-auto p-4">
+
+    <!-- วันที่ + ปุ่ม login -->
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2">
+        <i class="ti ti-calendar text-[#185FA5]"></i>
+        <input type="date" id="datePicker" onchange="loadStats()" class="h-9 px-3 text-sm border border-slate-200 rounded-lg outline-none"/>
+      </div>
+      <a href="login.html" class="flex items-center gap-1.5 px-4 h-9 bg-[#185FA5] hover:bg-[#0C447C] text-white rounded-lg text-sm font-medium">
+        <i class="ti ti-login"></i> เข้าสู่ระบบ
+      </a>
+    </div>
+
+    <div id="loading" class="text-center text-sm text-slate-400 py-12">
+      <i class="ti ti-loader-2 text-2xl animate-spin block mb-2"></i>กำลังโหลดข้อมูล...
+    </div>
+
+    <div id="content" class="hidden">
+
+      <!-- การ์ดสรุป 4 ตัว -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div class="bg-white rounded-xl border border-slate-100 p-4 text-center">
+          <i class="ti ti-users text-[#185FA5] text-xl"></i>
+          <p id="cardTotal" class="text-2xl font-medium text-slate-800 mt-1">0</p>
+          <p class="text-[11px] text-slate-500">นักเรียนทั้งหมด</p>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-100 p-4 text-center">
+          <i class="ti ti-clipboard-check text-[#185FA5] text-xl"></i>
+          <p id="cardChecked" class="text-2xl font-medium text-slate-800 mt-1">0</p>
+          <p class="text-[11px] text-slate-500">เช็คชื่อแล้ว</p>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-100 p-4 text-center border-b-2 border-b-[#1D9E75]">
+          <i class="ti ti-circle-check text-[#1D9E75] text-xl"></i>
+          <p id="cardRate" class="text-2xl font-medium text-[#085041] mt-1">0%</p>
+          <p class="text-[11px] text-slate-500">อัตรามาเรียน</p>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-100 p-4 text-center border-b-2 border-b-[#E24B4A]">
+          <i class="ti ti-circle-x text-[#E24B4A] text-xl"></i>
+          <p id="cardAbsent" class="text-2xl font-medium text-[#791F1F] mt-1">0</p>
+          <p class="text-[11px] text-slate-500">ขาดเรียน</p>
         </div>
       </div>
 
-      <!-- เนื้อหา -->
-      <div class="p-6">
-        <div class="flex items-center gap-2 mb-4">
-          <i class="ti ti-plug-connected text-[#185FA5]"></i>
-          <h2 class="text-sm font-medium text-slate-700">สถานะการเชื่อมต่อ Backend</h2>
+      <!-- กราฟ -->
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <!-- วงกลม -->
+        <div class="bg-white rounded-xl border border-slate-100 p-4">
+          <p class="text-sm font-medium text-slate-700 mb-3"><i class="ti ti-chart-pie text-[#185FA5]"></i> สัดส่วนการมาเรียน</p>
+          <div style="height: 240px;"><canvas id="pieChart"></canvas></div>
         </div>
-
-        <!-- กล่องสถานะ -->
-        <div id="status" class="rounded-lg p-4 mb-4 bg-slate-50 border border-slate-200">
-          <div class="flex items-center gap-3">
-            <div class="w-3 h-3 rounded-full bg-slate-300 animate-pulse"></div>
-            <span class="text-sm text-slate-500">กำลังเชื่อมต่อ...</span>
-          </div>
+        <!-- แท่งรายห้อง -->
+        <div class="bg-white rounded-xl border border-slate-100 p-4">
+          <p class="text-sm font-medium text-slate-700 mb-3"><i class="ti ti-chart-bar text-[#185FA5]"></i> การมาเรียนรายห้อง</p>
+          <div style="height: 240px;"><canvas id="barChart"></canvas></div>
         </div>
-
-        <!-- ผลลัพธ์ -->
-        <div id="result" class="hidden rounded-lg p-3 mb-4 text-xs font-mono bg-slate-900 text-green-400 overflow-x-auto"></div>
-
-        <!-- ปุ่มทดสอบ -->
-        <button onclick="testConnection()" class="w-full py-2.5 bg-[#185FA5] hover:bg-[#0C447C] text-white rounded-lg text-sm font-medium transition flex items-center justify-center gap-2">
-          <i class="ti ti-refresh"></i> ทดสอบอีกครั้ง
-        </button>
-
-        <p class="text-center text-xs text-slate-400 mt-4">
-          ระบบเช็คชื่อนักเรียน v1.0
-        </p>
       </div>
+
+      <!-- ตารางรายห้อง (ตัวเลขล้วน ไม่มีชื่อ) -->
+      <div class="bg-white rounded-xl border border-slate-100 p-4">
+        <p class="text-sm font-medium text-slate-700 mb-3"><i class="ti ti-table text-[#185FA5]"></i> สรุปรายห้อง</p>
+        <div id="classTable"></div>
+      </div>
+
+      <p class="text-center text-[10px] text-slate-400 mt-4">
+        <i class="ti ti-shield-check"></i> ข้อมูลสถิติรวม ไม่เปิดเผยข้อมูลส่วนบุคคลของนักเรียน
+      </p>
 
     </div>
   </div>
 
   <script>
-    // ===================================================
-    // ⚠️ สำคัญ: เปลี่ยน URL นี้เป็น Apps Script URL ของคุณ
-    // (URL ที่ copy มาตอน Deploy Web App)
-    // ===================================================
     const API_URL = 'https://script.google.com/macros/s/AKfycbyZB1sqZKu_--r5_mwf9RCJm4u9cTjzrOMToh_ULv22lw81oRZ3U9if0YxkV_nNhWhesw/exec';
+    let pieChart = null, barChart = null;
 
-    async function testConnection() {
-      const statusEl = document.getElementById('status');
-      const resultEl = document.getElementById('result');
+    document.getElementById('datePicker').value = new Date().toISOString().slice(0, 10);
 
-      // แสดงสถานะกำลังโหลด
-      statusEl.className = 'rounded-lg p-4 mb-4 bg-slate-50 border border-slate-200';
-      statusEl.innerHTML = `
-        <div class="flex items-center gap-3">
-          <div class="w-3 h-3 rounded-full bg-amber-400 animate-pulse"></div>
-          <span class="text-sm text-slate-500">กำลังเชื่อมต่อ...</span>
-        </div>`;
-      resultEl.classList.add('hidden');
+    async function loadStats() {
+      const date = document.getElementById('datePicker').value;
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('content').classList.add('hidden');
 
       try {
-        const res = await fetch(API_URL + '?action=ping');
+        const res = await fetch(API_URL + '?action=publicStats&date=' + date);
         const data = await res.json();
+        if (!data.success) throw new Error('โหลดไม่สำเร็จ');
 
-        if (data.success) {
-          // สำเร็จ
-          statusEl.className = 'rounded-lg p-4 mb-4 bg-green-50 border border-green-200';
-          statusEl.innerHTML = `
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
-                <i class="ti ti-check text-white"></i>
-              </div>
-              <div>
-                <p class="text-sm font-medium text-green-800">เชื่อมต่อสำเร็จ!</p>
-                <p class="text-xs text-green-600">${data.message}</p>
-              </div>
-            </div>`;
-          resultEl.classList.remove('hidden');
-          resultEl.textContent = JSON.stringify(data, null, 2);
-        } else {
-          throw new Error(data.error || 'เกิดข้อผิดพลาด');
-        }
+        document.getElementById('schoolName').textContent = data.schoolName;
+        document.getElementById('cardTotal').textContent = data.totalStudents;
+        document.getElementById('cardChecked').textContent = data.totalChecked;
+        document.getElementById('cardRate').textContent = data.attendedRate + '%';
+        document.getElementById('cardAbsent').textContent = data.summary.absent;
+
+        renderPie(data.summary);
+        renderBar(data.byClass);
+        renderTable(data.byClass);
+
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('content').classList.remove('hidden');
       } catch (err) {
-        // ล้มเหลว
-        statusEl.className = 'rounded-lg p-4 mb-4 bg-red-50 border border-red-200';
-        statusEl.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
-              <i class="ti ti-x text-white"></i>
-            </div>
-            <div>
-              <p class="text-sm font-medium text-red-800">เชื่อมต่อไม่สำเร็จ</p>
-              <p class="text-xs text-red-600">${err.message}</p>
-            </div>
-          </div>`;
-        resultEl.classList.remove('hidden');
-        resultEl.className = 'rounded-lg p-3 mb-4 text-xs font-mono bg-slate-900 text-red-400 overflow-x-auto';
-        resultEl.textContent = 'ตรวจสอบ:\n1. วาง API_URL ถูกต้องไหม\n2. Deploy แบบ Anyone ไหม\n3. มี /exec ต่อท้ายไหม\n\nError: ' + err.message;
+        document.getElementById('loading').innerHTML = '<p class="text-red-500">โหลดข้อมูลไม่สำเร็จ</p>';
       }
     }
 
-    // ทดสอบทันทีเมื่อเปิดหน้า
-    testConnection();
+    function renderPie(s) {
+      if (pieChart) pieChart.destroy();
+      const ctx = document.getElementById('pieChart');
+      pieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['มา', 'สาย', 'ลากิจ', 'ลาป่วย', 'ขาด'],
+          datasets: [{
+            data: [s.present, s.late, s.leave_personal, s.leave_sick, s.absent],
+            backgroundColor: ['#1D9E75', '#EF9F27', '#534AB7', '#185FA5', '#E24B4A']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 11 } } } } }
+      });
+    }
+
+    function renderBar(byClass) {
+      if (barChart) barChart.destroy();
+      const ctx = document.getElementById('barChart');
+      barChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: byClass.map(c => c.className),
+          datasets: [
+            { label: 'มา', data: byClass.map(c => c.present), backgroundColor: '#1D9E75' },
+            { label: 'สาย', data: byClass.map(c => c.late), backgroundColor: '#EF9F27' },
+            { label: 'ขาด', data: byClass.map(c => c.absent), backgroundColor: '#E24B4A' }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false,
+          scales: { x: { stacked: true, ticks: { font: { family: 'Sarabun', size: 10 } } },
+                    y: { stacked: true, ticks: { font: { size: 10 } } } },
+          plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 11 } } } } }
+      });
+    }
+
+    function renderTable(byClass) {
+      if (!byClass.length) {
+        document.getElementById('classTable').innerHTML = '<p class="text-center text-xs text-slate-400 py-4">ยังไม่มีการเช็คชื่อในวันนี้</p>';
+        return;
+      }
+      document.getElementById('classTable').innerHTML = `
+        <table class="w-full text-xs">
+          <thead><tr class="border-b border-slate-200 text-slate-500 text-[10px]">
+            <th class="py-2 text-left">ห้อง</th><th class="py-2 text-center">มา</th>
+            <th class="py-2 text-center">สาย</th><th class="py-2 text-center">ลา</th>
+            <th class="py-2 text-center">ขาด</th><th class="py-2 text-center">รวม</th>
+          </tr></thead>
+          <tbody>
+            ${byClass.map(c => `
+              <tr class="border-b border-slate-50">
+                <td class="py-2 font-medium">${c.className}</td>
+                <td class="py-2 text-center text-[#1D9E75]">${c.present}</td>
+                <td class="py-2 text-center text-[#BA7517]">${c.late}</td>
+                <td class="py-2 text-center text-[#534AB7]">${c.leave}</td>
+                <td class="py-2 text-center text-[#E24B4A]">${c.absent}</td>
+                <td class="py-2 text-center text-slate-400">${c.total}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    loadStats();
   </script>
 
 </body>
