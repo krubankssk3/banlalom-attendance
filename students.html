@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>จัดการนักเรียน - โรงเรียนบ้านละลม</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.5.0/tabler-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
   <style> body { font-family: 'Sarabun', sans-serif; } </style>
 </head>
@@ -127,6 +128,13 @@
 
     const user = JSON.parse(localStorage.getItem('banlalom_user') || '{}');
     if (!user.id) window.location.href = 'login.html';
+    const isAdmin = (user.role === 'Admin' || !user.role);
+    const myClass = user.assignedClass ? String(user.assignedClass).trim() : '';
+    // ครูที่ไม่มีห้องประจำชั้น จัดการนักเรียนไม่ได้
+    if (!isAdmin && !myClass) {
+      alert('คุณไม่ได้เป็นครูประจำชั้น จึงจัดการข้อมูลนักเรียนไม่ได้');
+      window.location.href = 'admin.html';
+    }
 
     let students = [];
     let editingId = null;
@@ -151,17 +159,30 @@
         const res = await fetch(API_URL + '?action=getClasses');
         const data = await res.json();
         if (data.success) {
+          let classList = data.data;
+          // ครูเห็นเฉพาะห้องประจำชั้นตัวเอง
+          if (!isAdmin) {
+            classList = data.data.filter(c => String(c.ClassID).trim() === myClass);
+          }
           const opts = '<option value="">-- เลือก --</option>' +
-            data.data.map(c => `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`).join('');
+            classList.map(c => `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`).join('');
           document.getElementById('classId').innerHTML = opts;
-          document.getElementById('filterClass').innerHTML = '<option value="">ทุกห้อง</option>' +
-            data.data.map(c => `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`).join('');
+          document.getElementById('filterClass').innerHTML = (isAdmin ? '<option value="">ทุกห้อง</option>' : '') +
+            classList.map(c => `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`).join('');
+
+          // ครู: ตั้ง filter เป็นห้องตัวเอง + ล็อก
+          if (!isAdmin) {
+            document.getElementById('filterClass').value = myClass;
+            document.getElementById('filterClass').disabled = true;
+            document.getElementById('classId').value = myClass;
+          }
         }
       } catch (err) {}
     }
 
     async function loadStudents() {
-      const filterClass = document.getElementById('filterClass').value;
+      // ครูล็อกเป็นห้องตัวเองเสมอ / แอดมินเลือกได้
+      const filterClass = isAdmin ? document.getElementById('filterClass').value : myClass;
       const url = API_URL + '?action=getStudentsManage' + (filterClass ? '&classId=' + encodeURIComponent(filterClass) : '');
       try {
         const res = await fetch(url);
