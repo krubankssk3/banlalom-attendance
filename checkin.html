@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>เช็คชื่อ - โรงเรียนบ้านละลม</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.5.0/tabler-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Sarabun', sans-serif; }
@@ -112,10 +113,33 @@
         const data = await res.json();
         if (data.success) {
           const sel = document.getElementById('classSelect');
-          sel.innerHTML = '<option value="">-- เลือกห้อง --</option>';
-          data.data.forEach(c => {
-            sel.innerHTML += `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`;
-          });
+          const isAdmin = (user.role === 'Admin' || !user.role);
+
+          if (isAdmin) {
+            // แอดมินเห็นทุกห้อง
+            sel.innerHTML = '<option value="">-- เลือกห้อง --</option>';
+            data.data.forEach(c => {
+              sel.innerHTML += `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`;
+            });
+          } else {
+            // ครูเห็นเฉพาะห้องประจำชั้นตัวเอง (AssignedClass)
+            const myClass = user.assignedClass ? String(user.assignedClass).trim() : '';
+            if (!myClass) {
+              // ไม่มีห้องประจำชั้น = ไม่มีสิทธิ์เช็คชื่อ Homeroom
+              sel.innerHTML = '<option value="">- ไม่มีห้องประจำชั้น -</option>';
+              sel.disabled = true;
+              document.getElementById('studentList').innerHTML =
+                '<div class="text-center text-sm text-slate-400 py-8">คุณไม่ได้เป็นครูประจำชั้น<br/>หากต้องการเช็คชื่อรายวิชา ไปที่เมนู "เช็คชื่อรายคาบ"</div>';
+              return;
+            }
+            const myCls = data.data.find(c => String(c.ClassID).trim() === myClass);
+            const clsName = myCls ? (myCls.ClassName || myCls.ClassID) : myClass;
+            // ล็อกเป็นห้องตัวเอง เลือกอื่นไม่ได้
+            sel.innerHTML = `<option value="${myClass}">${clsName}</option>`;
+            sel.disabled = true;
+            // โหลดนักเรียนห้องตัวเองทันที
+            loadStudents();
+          }
         }
       } catch (err) {
         document.getElementById('classSelect').innerHTML = '<option>โหลดห้องไม่สำเร็จ</option>';
