@@ -210,8 +210,10 @@
             <p class="text-sm font-medium truncate">${s.prefix}${s.firstName} ${s.lastName} ${s.nickName ? '('+s.nickName+')' : ''}</p>
             <p class="text-[10px] text-slate-500">${s.classId} · เลขที่ ${s.number} · <span class="font-mono">${s.studentId}</span>${s.parentPhone ? ' · โทร '+s.parentPhone : ''}</p>
           </div>
+          ${isAdmin ? `
           <button data-edit="${s.studentId}" class="btn-edit flex items-center gap-1 text-xs text-[#185FA5] border border-[#185FA5] px-2.5 py-1.5 rounded-md hover:bg-blue-50 flex-shrink-0"><i class="ti ti-edit"></i> แก้ไข</button>
           <button data-del="${s.studentId}" data-name="${s.firstName}" class="btn-del flex items-center gap-1 text-xs text-[#E24B4A] border border-[#E24B4A] px-2.5 py-1.5 rounded-md hover:bg-red-50 flex-shrink-0"><i class="ti ti-trash"></i> ลบ</button>
+          ` : ''}
         </div>`).join('');
 
       // ผูกปุ่มด้วย event listener (ทนทานกว่า onclick inline)
@@ -349,6 +351,25 @@
       }
     }
 
+    // ครู (ไม่ใช่แอดมิน) ดูได้อย่างเดียว - ซ่อนฟอร์มเพิ่ม + แท็บ
+    function applyStudentPermission() {
+      if (!isAdmin) {
+        // ซ่อนแท็บเพิ่ม (ทีละคน/Excel)
+        var tabSingle = document.getElementById('tabSingle');
+        var tabBulk = document.getElementById('tabBulk');
+        if (tabSingle && tabSingle.parentElement) tabSingle.parentElement.style.display = 'none';
+        // ซ่อนฟอร์มเพิ่ม
+        var single = document.getElementById('singleMode');
+        var bulk = document.getElementById('bulkMode');
+        if (single) single.style.display = 'none';
+        if (bulk) bulk.style.display = 'none';
+        // เปลี่ยนคำอธิบายหัวข้อ
+        var sub = document.querySelector('.text-blue-200');
+        if (sub) sub.textContent = 'ดูรายชื่อนักเรียนห้องของคุณ (เพิ่ม/แก้/ลบ ติดต่อผู้ดูแลระบบ)';
+      }
+    }
+
+    applyStudentPermission();
     loadClasses();
     loadStudents();
   </script>
