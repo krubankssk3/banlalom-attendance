@@ -25,6 +25,7 @@
           <div>
             <p class="text-base font-medium">เช็คชื่อรายคาบ</p>
             <p id="headerInfo" class="text-xs text-indigo-200 mt-1">เลือกวิชาและคาบที่สอน</p>
+            <p id="todayBadge" class="text-[11px] text-white/90 mt-1"></p>
           </div>
           <div id="countBadge" class="bg-amber-400/20 text-amber-400 px-3 py-1 rounded-full text-xs font-medium hidden">0 คน</div>
         </div>
@@ -112,6 +113,10 @@
     let attendance = {};
     let currentClassId = '';
     const today = new Date().toISOString().slice(0, 10);
+    const _days = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+    const _months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    const _now = new Date();
+    const dateStr = 'วัน' + _days[_now.getDay()] + 'ที่ ' + _now.getDate() + ' ' + _months[_now.getMonth()] + ' ' + (_now.getFullYear()+543);
 
     // โหลดรายวิชาของครู
     async function loadSubjects() {
@@ -219,7 +224,7 @@
 
         renderStudents();
         const subjName = document.getElementById('subjectSelect').selectedOptions[0].text;
-        document.getElementById('headerInfo').textContent = subjName + ' · คาบ ' + period;
+        document.getElementById('headerInfo').textContent = subjName + ' · คาบ ' + period + ' · ' + dateStr;
         document.getElementById('countBadge').textContent = students.length + ' คน';
         document.getElementById('countBadge').classList.remove('hidden');
         document.getElementById('quickActions').classList.remove('hidden');
@@ -341,6 +346,7 @@
     }
 
     loadSubjects();
+    document.getElementById('todayBadge').innerHTML = '📅 เช็คชื่อของ ' + dateStr;
   </script>
 
 
