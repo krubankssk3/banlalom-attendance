@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>รายงานการมาเรียน - โรงเรียนบ้านละลม</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.5.0/tabler-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Sarabun', sans-serif; }
@@ -32,6 +33,7 @@
         <button id="tab-daily" onclick="switchTab('daily')" class="flex-1 py-3 text-xs font-medium border-b-2 border-[#185FA5] text-[#185FA5]">รายวัน</button>
         <button id="tab-student" onclick="switchTab('student')" class="flex-1 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500">รายคน</button>
         <button id="tab-class" onclick="switchTab('class')" class="flex-1 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500">รายห้อง</button>
+        <button id="tab-subject" onclick="switchTab('subject')" class="flex-1 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500">รายคาบ</button>
       </div>
 
       <!-- ===== มุมรายวัน ===== -->
@@ -66,6 +68,12 @@
         <div id="classResult"><div class="text-center text-sm text-slate-400 py-6">เลือกห้องแล้วกดดู</div></div>
       </div>
 
+      <!-- ===== มุมรายคาบ (สถิติวิชาที่สอน) ===== -->
+      <div id="view-subject" class="hidden p-4">
+        <p class="text-[11px] text-slate-400 mb-3"><i class="ti ti-info-circle"></i> สถิติการเช็คชื่อรายคาบของวิชาที่สอน</p>
+        <div id="subjectResult"><div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div></div>
+      </div>
+
     </div>
   </div>
 
@@ -78,12 +86,54 @@
     const thisMonth = today.slice(0, 7);
 
     function switchTab(tab) {
-      ['daily','student','class'].forEach(t => {
+      ['daily','student','class','subject'].forEach(t => {
         document.getElementById('view-' + t).classList.toggle('hidden', t !== tab);
         const btn = document.getElementById('tab-' + t);
         if (t === tab) { btn.className = 'flex-1 py-3 text-xs font-medium border-b-2 border-[#185FA5] text-[#185FA5]'; }
         else { btn.className = 'flex-1 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500'; }
       });
+      if (tab === 'subject') loadSubjectReport();
+    }
+
+    // ----- รายคาบ (สถิติวิชาที่สอน) -----
+    async function loadSubjectReport() {
+      const box = document.getElementById('subjectResult');
+      box.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>';
+      try {
+        // ครูดูเฉพาะวิชาตัวเอง / แอดมินดูทุกวิชา
+        const isAdmin = (user.role === 'Admin' || !user.role);
+        let url = API_URL + '?action=reportSubject';
+        if (!isAdmin) url += '&teacherId=' + encodeURIComponent(user.id);
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.success || !data.data.length) {
+          box.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">ยังไม่มีข้อมูลการเช็คชื่อรายคาบ</div>';
+          return;
+        }
+        box.innerHTML = `
+          <table class="w-full text-xs">
+            <thead><tr class="border-b border-slate-200 text-slate-500 text-[10px]">
+              <th class="py-2 text-left">วิชา</th><th class="py-2 text-center">ห้อง</th>
+              <th class="py-2 text-center">มา</th><th class="py-2 text-center">สาย</th>
+              <th class="py-2 text-center">ลา</th><th class="py-2 text-center">ขาด</th>
+              <th class="py-2 text-center">อัตรามา</th>
+            </tr></thead>
+            <tbody>
+              ${data.data.map(s => `
+                <tr class="border-b border-slate-50">
+                  <td class="py-2 font-medium">${s.subjectName}</td>
+                  <td class="py-2 text-center text-slate-500">${s.classId}</td>
+                  <td class="py-2 text-center text-[#1D9E75]">${s.present}</td>
+                  <td class="py-2 text-center text-[#BA7517]">${s.late}</td>
+                  <td class="py-2 text-center text-[#534AB7]">${s.leave}</td>
+                  <td class="py-2 text-center text-[#E24B4A]">${s.absent}</td>
+                  <td class="py-2 text-center font-medium ${s.attendanceRate >= 80 ? 'text-[#1D9E75]' : 'text-[#E24B4A]'}">${s.attendanceRate}%</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+      } catch (err) {
+        box.innerHTML = '<div class="text-center text-sm text-red-500 py-6">โหลดไม่สำเร็จ</div>';
+      }
     }
 
     // ----- โหลด dropdown -----
@@ -239,5 +289,11 @@
     loadDaily();
   </script>
 
+
+  <!-- Footer เครดิตผู้พัฒนา -->
+  <footer class="py-5 text-center">
+    <p class="text-[11px] text-slate-400">ผู้พัฒนา: นายชิติพัทธ์ นิลวรรณ · ตำแหน่ง ครู</p>
+    <p class="text-[11px] text-slate-400">โรงเรียนบ้านละลม สพป.ศรีสะเกษ เขต 3</p>
+  </footer>
 </body>
 </html>
