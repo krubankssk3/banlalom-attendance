@@ -68,10 +68,17 @@
         <div id="classResult"><div class="text-center text-sm text-slate-400 py-6">เลือกห้องแล้วกดดู</div></div>
       </div>
 
-      <!-- ===== มุมรายคาบ (สถิติวิชาที่สอน) ===== -->
-      <div id="view-subject" class="hidden p-4">
-        <p class="text-[11px] text-slate-400 mb-3"><i class="ti ti-info-circle"></i> สถิติการเช็คชื่อรายคาบของวิชาที่สอน</p>
-        <div id="subjectResult"><div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div></div>
+      <!-- ===== มุมรายคาบ (รายชื่อรายวัน) ===== -->
+      <div id="view-subject" class="p-4 hidden">
+        <p class="text-[11px] text-slate-400 mb-3"><i class="ti ti-info-circle"></i> ดูว่าวิชาที่สอน วันนั้น ใครมา/สาย/ลา/ขาด</p>
+        <div class="no-print grid grid-cols-3 gap-2 mb-4">
+          <select id="subjReportSelect" class="h-10 px-2 text-sm border border-slate-200 rounded-lg outline-none">
+            <option value="">-- เลือกวิชา --</option>
+          </select>
+          <input type="date" id="subjReportDate" class="h-10 px-2 text-sm border border-slate-200 rounded-lg outline-none"/>
+          <button onclick="loadSubjectDay()" class="bg-[#185FA5] text-white rounded-lg text-sm font-medium">ดู</button>
+        </div>
+        <div id="subjectResult"><div class="text-center text-sm text-slate-400 py-6">เลือกวิชาและวันที่แล้วกดดู</div></div>
       </div>
 
     </div>
@@ -95,42 +102,79 @@
       if (tab === 'subject') loadSubjectReport();
     }
 
-    // ----- รายคาบ (สถิติวิชาที่สอน) -----
+    // ----- รายคาบ: โหลด dropdown วิชา -----
+    let subjectsLoaded = false;
     async function loadSubjectReport() {
-      const box = document.getElementById('subjectResult');
-      box.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>';
+      // ตั้งวันที่เริ่มต้นเป็นวันนี้
+      if (!document.getElementById('subjReportDate').value) {
+        document.getElementById('subjReportDate').value = today;
+      }
+      if (subjectsLoaded) return;
       try {
-        // ครูดูเฉพาะวิชาตัวเอง / แอดมินดูทุกวิชา
         const isAdmin = (user.role === 'Admin' || !user.role);
-        let url = API_URL + '?action=reportSubject';
+        let url = API_URL + '?action=getSubjects';
         if (!isAdmin) url += '&teacherId=' + encodeURIComponent(user.id);
         const res = await fetch(url);
         const data = await res.json();
-        if (!data.success || !data.data.length) {
-          box.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">ยังไม่มีข้อมูลการเช็คชื่อรายคาบ</div>';
+        if (data.success) {
+          document.getElementById('subjReportSelect').innerHTML = '<option value="">-- เลือกวิชา --</option>' +
+            data.data.map(s => `<option value="${s.subjectId}">${s.subjectName} (${s.classId})</option>`).join('');
+          subjectsLoaded = true;
+        }
+      } catch (err) {}
+    }
+
+    // ----- รายคาบ: แสดงรายชื่อของวันนั้น -----
+    async function loadSubjectDay() {
+      const subjectId = document.getElementById('subjReportSelect').value;
+      const date = document.getElementById('subjReportDate').value;
+      const box = document.getElementById('subjectResult');
+      if (!subjectId) { box.innerHTML = '<div class="text-center text-sm text-amber-600 py-6">เลือกวิชาก่อน</div>'; return; }
+      if (!date) { box.innerHTML = '<div class="text-center text-sm text-amber-600 py-6">เลือกวันที่ก่อน</div>'; return; }
+
+      box.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>';
+      try {
+        const res = await fetch(API_URL + '?action=reportSubjectDay&subjectId=' + encodeURIComponent(subjectId) + '&date=' + date);
+        const data = await res.json();
+        if (!data.success) { box.innerHTML = '<div class="text-center text-sm text-red-500 py-6">' + (data.error || 'โหลดไม่สำเร็จ') + '</div>'; return; }
+
+        if (data.summary.total === 0) {
+          box.innerHTML = `<div class="text-center text-sm text-slate-400 py-6"><i class="ti ti-calendar-off text-2xl block mb-2"></i>วันนี้ยังไม่มีการเช็คชื่อวิชานี้</div>`;
           return;
         }
+
+        // แปลงวันที่ไทย
+        const d = new Date(date);
+        const thDays = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+        const thMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+        const dateStr = 'วัน' + thDays[d.getDay()] + 'ที่ ' + d.getDate() + ' ' + thMonths[d.getMonth()] + ' ' + (d.getFullYear()+543);
+
+        const g = data.groups;
+        function section(title, color, list) {
+          if (!list.length) return '';
+          return `<div class="mb-3">
+            <p class="text-xs font-medium ${color} mb-1.5">${title} (${list.length} คน)</p>
+            <div class="space-y-1">
+              ${list.map(s => `<div class="text-xs text-slate-600 pl-2">${s.number ? s.number+'. ' : ''}${s.name}</div>`).join('')}
+            </div></div>`;
+        }
+
         box.innerHTML = `
-          <table class="w-full text-xs">
-            <thead><tr class="border-b border-slate-200 text-slate-500 text-[10px]">
-              <th class="py-2 text-left">วิชา</th><th class="py-2 text-center">ห้อง</th>
-              <th class="py-2 text-center">มา</th><th class="py-2 text-center">สาย</th>
-              <th class="py-2 text-center">ลา</th><th class="py-2 text-center">ขาด</th>
-              <th class="py-2 text-center">อัตรามา</th>
-            </tr></thead>
-            <tbody>
-              ${data.data.map(s => `
-                <tr class="border-b border-slate-50">
-                  <td class="py-2 font-medium">${s.subjectName}</td>
-                  <td class="py-2 text-center text-slate-500">${s.classId}</td>
-                  <td class="py-2 text-center text-[#1D9E75]">${s.present}</td>
-                  <td class="py-2 text-center text-[#BA7517]">${s.late}</td>
-                  <td class="py-2 text-center text-[#534AB7]">${s.leave}</td>
-                  <td class="py-2 text-center text-[#E24B4A]">${s.absent}</td>
-                  <td class="py-2 text-center font-medium ${s.attendanceRate >= 80 ? 'text-[#1D9E75]' : 'text-[#E24B4A]'}">${s.attendanceRate}%</td>
-                </tr>`).join('')}
-            </tbody>
-          </table>`;
+          <div class="mb-4 p-3 bg-slate-50 rounded-lg">
+            <p class="text-sm font-medium text-slate-700">${data.subjectName} (${data.classId})</p>
+            <p class="text-[11px] text-slate-500">${dateStr}</p>
+            <div class="flex gap-3 mt-2 text-[11px]">
+              <span class="text-[#1D9E75]">มา ${data.summary.present}</span>
+              <span class="text-[#BA7517]">สาย ${data.summary.late}</span>
+              <span class="text-[#534AB7]">ลา ${data.summary.leave}</span>
+              <span class="text-[#E24B4A]">ขาด ${data.summary.absent}</span>
+            </div>
+          </div>
+          ${section('🔴 ขาดเรียน', 'text-[#E24B4A]', g.absent)}
+          ${section('🟡 มาสาย', 'text-[#BA7517]', g.late)}
+          ${section('🟣 ลากิจ', 'text-[#534AB7]', g.leave_personal)}
+          ${section('🔵 ลาป่วย', 'text-[#185FA5]', g.leave_sick)}
+          ${section('✅ มาเรียน', 'text-[#1D9E75]', g.present)}`;
       } catch (err) {
         box.innerHTML = '<div class="text-center text-sm text-red-500 py-6">โหลดไม่สำเร็จ</div>';
       }
