@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตารางสอน - โรงเรียนบ้านละลม</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Sarabun', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <div class="max-w-3xl mx-auto p-4">
+
+    <a href="admin.html" class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 mb-3">
+      <i class="ti ti-arrow-left"></i> กลับ Dashboard
+    </a>
+
+    <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+
+      <div class="bg-gradient-to-br from-[#534AB7] to-[#3C3489] p-4 text-white">
+        <p class="text-base font-medium"><i class="ti ti-calendar-time"></i> ตารางสอน</p>
+        <p class="text-xs text-purple-100 mt-1">กำหนดคาบสอนของครู เพื่อใช้เลือกคาบตอนเช็คชื่อ</p>
+      </div>
+
+      <!-- ฟอร์มเพิ่มคาบสอน -->
+      <div class="p-4 bg-slate-50 border-b border-slate-100">
+        <p class="text-xs font-medium text-[#534AB7] mb-3"><i class="ti ti-plus"></i> เพิ่มคาบสอน</p>
+        <div id="formError" class="hidden mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"></div>
+
+        <div class="grid grid-cols-2 gap-2 mb-2">
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">วิชา (ห้อง)</label>
+            <select id="subjectSelect" onchange="onSubjectChange()" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none">
+              <option value="">-- เลือกวิชา --</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">วัน</label>
+            <select id="daySelect" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none">
+              <option value="1">จันทร์</option><option value="2">อังคาร</option>
+              <option value="3">พุธ</option><option value="4">พฤหัสบดี</option>
+              <option value="5">ศุกร์</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 mb-3">
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">คาบ</label>
+            <select id="periodSelect" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none">
+              <option value="1">คาบ 1</option><option value="2">คาบ 2</option>
+              <option value="3">คาบ 3</option><option value="4">คาบ 4</option>
+              <option value="5">คาบ 5</option><option value="6">คาบ 6</option>
+              <option value="7">คาบ 7</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">เริ่ม</label>
+            <input type="time" id="startTime" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none"/>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 mb-1">ถึง</label>
+            <input type="time" id="endTime" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none"/>
+          </div>
+        </div>
+        <button id="addBtn" onclick="addSchedule()" class="w-full h-9 bg-[#534AB7] text-white rounded-lg text-xs font-medium">
+          <i class="ti ti-plus"></i> เพิ่มคาบสอน
+        </button>
+      </div>
+
+      <!-- ตารางสอนรายสัปดาห์ -->
+      <div class="p-4">
+        <p class="text-xs text-slate-500 mb-3">ตารางสอน (<span id="schCount">0</span> คาบ)</p>
+        <div id="scheduleList" class="space-y-3">
+          <div class="text-center text-xs text-slate-400 py-6">กำลังโหลด...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="py-5 text-center">
+    <p class="text-[11px] text-slate-400">ผู้พัฒนา: นายชิติพัทธ์ นิลวรรณ · ตำแหน่ง ครู</p>
+    <p class="text-[11px] text-slate-400">โรงเรียนบ้านละลม สพป.ศรีสะเกษ เขต 3</p>
+  </footer>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyZB1sqZKu_--r5_mwf9RCJm4u9cTjzrOMToh_ULv22lw81oRZ3U9if0YxkV_nNhWhesw/exec';
+    const user = JSON.parse(localStorage.getItem('banlalom_user') || '{}');
+    if (!user.id) window.location.href = 'login.html';
+    const isAdmin = (user.role === 'Admin' || !user.role);
+
+    const DAYS = { '1': 'จันทร์', '2': 'อังคาร', '3': 'พุธ', '4': 'พฤหัสบดี', '5': 'ศุกร์' };
+    const DAY_COLOR = { '1': 'bg-yellow-50 text-yellow-700', '2': 'bg-pink-50 text-pink-700', '3': 'bg-green-50 text-green-700', '4': 'bg-orange-50 text-orange-700', '5': 'bg-blue-50 text-blue-700' };
+    let subjects = [];
+
+    async function loadSubjects() {
+      try {
+        // ครูเห็นเฉพาะวิชาตัวเอง / แอดมินเห็นทุกวิชา
+        let url = API_URL + '?action=getSubjects';
+        if (!isAdmin) url += '&teacherId=' + encodeURIComponent(user.id);
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.success) {
+          subjects = data.data;
+          const sel = document.getElementById('subjectSelect');
+          sel.innerHTML = '<option value="">-- เลือกวิชา --</option>' +
+            data.data.map(s => `<option value="${s.subjectId}" data-class="${s.classId}" data-teacher="${s.teacherId}">${s.subjectName} (${s.classId})</option>`).join('');
+        }
+      } catch (err) {}
+    }
+
+    function onSubjectChange() {
+      // ไม่ต้องทำอะไรพิเศษ - เก็บ classId/teacherId จาก data attribute ตอนบันทึก
+    }
+
+    async function loadSchedule() {
+      const list = document.getElementById('scheduleList');
+      list.innerHTML = '<div class="text-center text-xs text-slate-400 py-6">กำลังโหลด...</div>';
+      try {
+        let url = API_URL + '?action=getSchedule';
+        if (!isAdmin) url += '&teacherId=' + encodeURIComponent(user.id);
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.success) throw new Error();
+
+        document.getElementById('schCount').textContent = data.data.length;
+        if (!data.data.length) {
+          list.innerHTML = '<div class="text-center text-xs text-slate-400 py-6"><i class="ti ti-calendar-off text-2xl block mb-2"></i>ยังไม่มีคาบสอน</div>';
+          return;
+        }
+
+        // จัดกลุ่มตามวัน
+        const byDay = {};
+        data.data.forEach(s => {
+          const d = String(s.dayOfWeek);
+          if (!byDay[d]) byDay[d] = [];
+          byDay[d].push(s);
+        });
+
+        list.innerHTML = Object.keys(byDay).sort().map(day => `
+          <div>
+            <span class="inline-block text-[11px] font-medium px-2 py-0.5 rounded ${DAY_COLOR[day] || 'bg-slate-100'} mb-1.5">${DAYS[day] || day}</span>
+            <div class="space-y-1.5">
+              ${byDay[day].map(s => `
+                <div class="flex items-center justify-between p-2.5 border border-slate-100 rounded-lg text-xs">
+                  <div>
+                    <span class="font-medium">คาบ ${s.period}</span>
+                    <span class="text-slate-500"> · ${s.subjectName} (${s.className})</span>
+                    ${s.startTime ? `<span class="text-[10px] text-slate-400 block">${s.startTime} - ${s.endTime}</span>` : ''}
+                  </div>
+                  <button data-del="${s.scheduleId}" class="del-btn text-[#E24B4A] hover:bg-red-50 w-7 h-7 rounded flex items-center justify-center flex-shrink-0"><i class="ti ti-trash text-sm"></i></button>
+                </div>`).join('')}
+            </div>
+          </div>`).join('');
+
+        // ผูกปุ่มลบ
+        document.querySelectorAll('.del-btn').forEach(btn => {
+          btn.addEventListener('click', () => deleteSchedule(btn.getAttribute('data-del')));
+        });
+      } catch (err) {
+        list.innerHTML = '<div class="text-center text-xs text-red-500 py-6">โหลดไม่สำเร็จ</div>';
+      }
+    }
+
+    async function addSchedule() {
+      const sel = document.getElementById('subjectSelect');
+      const opt = sel.selectedOptions[0];
+      const subjectId = sel.value;
+      if (!subjectId) { showError('เลือกวิชาก่อน'); return; }
+
+      const classId = opt.getAttribute('data-class');
+      const teacherId = opt.getAttribute('data-teacher');
+
+      const btn = document.getElementById('addBtn');
+      btn.disabled = true; btn.innerHTML = 'กำลังเพิ่ม...';
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'addSchedule',
+            subjectId: subjectId,
+            classId: classId,
+            teacherId: teacherId,
+            dayOfWeek: document.getElementById('daySelect').value,
+            period: document.getElementById('periodSelect').value,
+            startTime: document.getElementById('startTime').value,
+            endTime: document.getElementById('endTime').value
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('formError').classList.add('hidden');
+          loadSchedule();
+        } else {
+          showError(data.error || 'เพิ่มไม่สำเร็จ');
+        }
+      } catch (err) { showError('เชื่อมต่อระบบไม่ได้'); }
+      btn.disabled = false; btn.innerHTML = '<i class="ti ti-plus"></i> เพิ่มคาบสอน';
+    }
+
+    async function deleteSchedule(scheduleId) {
+      if (!confirm('ลบคาบสอนนี้?')) return;
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'deleteSchedule', scheduleId: scheduleId })
+        });
+        const data = await res.json();
+        if (data.success) loadSchedule();
+        else alert(data.error || 'ลบไม่สำเร็จ');
+      } catch (err) { alert('เชื่อมต่อระบบไม่ได้'); }
+    }
+
+    function showError(msg) {
+      const e = document.getElementById('formError');
+      e.textContent = msg; e.classList.remove('hidden');
+    }
+
+    loadSubjects();
+    loadSchedule();
+  </script>
+
+</body>
+</html>
