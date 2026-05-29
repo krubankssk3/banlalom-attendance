@@ -138,7 +138,7 @@
         const data = await res.json();
         if (!data.success) { box.innerHTML = '<div class="text-center text-sm text-red-500 py-6">' + (data.error || 'โหลดไม่สำเร็จ') + '</div>'; return; }
 
-        if (data.summary.total === 0) {
+        if (!data.periods || data.periods.length === 0) {
           box.innerHTML = `<div class="text-center text-sm text-slate-400 py-6"><i class="ti ti-calendar-off text-2xl block mb-2"></i>วันนี้ยังไม่มีการเช็คชื่อวิชานี้</div>`;
           return;
         }
@@ -149,32 +149,38 @@
         const thMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
         const dateStr = 'วัน' + thDays[d.getDay()] + 'ที่ ' + d.getDate() + ' ' + thMonths[d.getMonth()] + ' ' + (d.getFullYear()+543);
 
-        const g = data.groups;
+        function nameList(list) {
+          return list.map(s => `<div class="text-xs text-slate-600 pl-3">${s.number ? s.number+'. ' : ''}${s.name}</div>`).join('');
+        }
         function section(title, color, list) {
           if (!list.length) return '';
-          return `<div class="mb-3">
-            <p class="text-xs font-medium ${color} mb-1.5">${title} (${list.length} คน)</p>
-            <div class="space-y-1">
-              ${list.map(s => `<div class="text-xs text-slate-600 pl-2">${s.number ? s.number+'. ' : ''}${s.name}</div>`).join('')}
-            </div></div>`;
+          return `<div class="mb-2"><p class="text-[11px] font-medium ${color} mb-0.5">${title} (${list.length})</p>${nameList(list)}</div>`;
         }
 
-        box.innerHTML = `
+        // หัวข้อวิชา + วันที่
+        let html = `
           <div class="mb-4 p-3 bg-slate-50 rounded-lg">
             <p class="text-sm font-medium text-slate-700">${data.subjectName} (${data.classId})</p>
-            <p class="text-[11px] text-slate-500">${dateStr}</p>
-            <div class="flex gap-3 mt-2 text-[11px]">
-              <span class="text-[#1D9E75]">มา ${data.summary.present}</span>
-              <span class="text-[#BA7517]">สาย ${data.summary.late}</span>
-              <span class="text-[#534AB7]">ลา ${data.summary.leave}</span>
-              <span class="text-[#E24B4A]">ขาด ${data.summary.absent}</span>
+            <p class="text-[11px] text-slate-500">${dateStr} · ${data.periods.length} คาบ</p>
+          </div>`;
+
+        // แต่ละคาบ
+        html += data.periods.map(p => `
+          <div class="mb-4 border border-slate-100 rounded-lg p-3">
+            <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
+              <span class="text-xs font-medium bg-[#534AB7] text-white px-2.5 py-1 rounded">คาบ ${p.period}</span>
+              <span class="text-[11px] text-slate-500">
+                มา ${p.summary.present} · สาย ${p.summary.late} · ลา ${p.summary.leave} · ขาด ${p.summary.absent}
+              </span>
             </div>
-          </div>
-          ${section('🔴 ขาดเรียน', 'text-[#E24B4A]', g.absent)}
-          ${section('🟡 มาสาย', 'text-[#BA7517]', g.late)}
-          ${section('🟣 ลากิจ', 'text-[#534AB7]', g.leave_personal)}
-          ${section('🔵 ลาป่วย', 'text-[#185FA5]', g.leave_sick)}
-          ${section('✅ มาเรียน', 'text-[#1D9E75]', g.present)}`;
+            ${section('🔴 ขาดเรียน', 'text-[#E24B4A]', p.groups.absent)}
+            ${section('🟡 มาสาย', 'text-[#BA7517]', p.groups.late)}
+            ${section('🟣 ลากิจ', 'text-[#534AB7]', p.groups.leave_personal)}
+            ${section('🔵 ลาป่วย', 'text-[#185FA5]', p.groups.leave_sick)}
+            ${section('✅ มาเรียน', 'text-[#1D9E75]', p.groups.present)}
+          </div>`).join('');
+
+        box.innerHTML = html;
       } catch (err) {
         box.innerHTML = '<div class="text-center text-sm text-red-500 py-6">โหลดไม่สำเร็จ</div>';
       }
