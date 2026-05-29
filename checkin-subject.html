@@ -141,7 +141,7 @@
     }
 
     // เมื่อเลือกวิชา แสดงห้องที่จะเช็ค
-    function onSubjectChange() {
+    async function onSubjectChange() {
       const subjectId = document.getElementById('subjectSelect').value;
       const subj = subjects.find(s => s.subjectId === subjectId);
       const hint = document.getElementById('classHint');
@@ -150,10 +150,46 @@
         document.getElementById('classHintText').innerHTML =
           'วิชานี้สอนห้อง <strong>' + subj.classId + '</strong> · ดึงรายชื่อห้องนี้อัตโนมัติ';
         hint.classList.remove('hidden');
+        // ดึงคาบที่สอนวิชานี้จากตารางสอน
+        loadPeriodsForSubject(subjectId);
       } else {
         hint.classList.add('hidden');
         currentClassId = '';
       }
+    }
+
+    // ===== ดึงคาบสอนจากตารางสอน (ถ้ามี) =====
+    async function loadPeriodsForSubject(subjectId) {
+      const sel = document.getElementById('periodSelect');
+      try {
+        let url = API_URL + '?action=getSchedule';
+        if (user.role !== 'Admin' && user.role) url += '&teacherId=' + encodeURIComponent(user.id);
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.success && data.data.length) {
+          // กรองเฉพาะคาบของวิชานี้
+          const periods = data.data.filter(s => String(s.subjectId).trim() === String(subjectId).trim());
+          if (periods.length) {
+            // มีตารางสอน -> แสดงเฉพาะคาบที่สอนจริง
+            const DAYS = { '1':'จ.','2':'อ.','3':'พ.','4':'พฤ.','5':'ศ.' };
+            sel.innerHTML = periods.map(p =>
+              `<option value="${p.period}">คาบ ${p.period} (${DAYS[String(p.dayOfWeek)] || ''}${p.startTime ? ' '+p.startTime : ''})</option>`
+            ).join('');
+            return;
+          }
+        }
+        // ไม่มีตารางสอน -> ให้เลือกคาบเองแบบเดิม (1-7)
+        setDefaultPeriods();
+      } catch (err) {
+        setDefaultPeriods();
+      }
+    }
+
+    function setDefaultPeriods() {
+      const sel = document.getElementById('periodSelect');
+      let html = '';
+      for (let i = 1; i <= 7; i++) html += `<option value="${i}">คาบ ${i}</option>`;
+      sel.innerHTML = html;
     }
 
     async function loadStudents() {
@@ -307,5 +343,11 @@
     loadSubjects();
   </script>
 
+
+  <!-- Footer เครดิตผู้พัฒนา -->
+  <footer class="py-5 text-center">
+    <p class="text-[11px] text-slate-400">ผู้พัฒนา: นายชิติพัทธ์ นิลวรรณ · ตำแหน่ง ครู</p>
+    <p class="text-[11px] text-slate-400">โรงเรียนบ้านละลม สพป.ศรีสะเกษ เขต 3</p>
+  </footer>
 </body>
 </html>
