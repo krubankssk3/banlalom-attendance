@@ -11,10 +11,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Sarabun', sans-serif; }
-    .nav-link { transition: all 0.15s; }
-    .nav-link:hover { background: rgba(181,212,244,0.1); }
+    .nav-link { transition: all 0.2s ease; position: relative; overflow: hidden; }
+    .nav-link::before {
+      content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 3px;
+      background: #EF9F27; transform: scaleY(0); transition: transform 0.2s ease; transform-origin: bottom;
+    }
+    .nav-link:hover::before { transform: scaleY(1); }
+    .nav-link:hover { background: rgba(181,212,244,0.12); padding-left: 14px; }
     .nav-link.active { background: #EF9F27; color: #042C53 !important; font-weight: 500; }
     .nav-link.active i { color: #042C53 !important; }
+    .nav-link.active::before { transform: scaleY(0); }
+    .stat-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(4,44,83,0.1); }
+    .quick-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .quick-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(4,44,83,0.12); }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-up { animation: fadeUp 0.5s ease both; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body class="bg-slate-50">
@@ -108,22 +121,22 @@
       </div>
 
       <div class="grid grid-cols-4 gap-3 mb-5">
-        <div class="bg-white rounded-lg p-3 border-l-[3px] border-[#185FA5] border border-slate-100">
+        <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#185FA5] border border-slate-100">
           <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">นักเรียนทั้งหมด</span><i class="ti ti-users text-[#185FA5] text-sm"></i></div>
           <p id="statStudents" class="text-2xl font-medium text-slate-800">-</p>
           <p class="text-[10px] text-slate-400 mt-0.5">รวมทั้งโรงเรียน</p>
         </div>
-        <div class="bg-white rounded-lg p-3 border-l-[3px] border-[#1D9E75] border border-slate-100">
+        <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#1D9E75] border border-slate-100">
           <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">มาเรียนวันนี้</span><i class="ti ti-circle-check text-[#1D9E75] text-sm"></i></div>
           <p id="statPresent" class="text-2xl font-medium text-[#085041]">-</p>
           <p class="text-[10px] text-slate-400 mt-0.5">เช็คชื่อแล้ว</p>
         </div>
-        <div class="bg-white rounded-lg p-3 border-l-[3px] border-[#EF9F27] border border-slate-100">
+        <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#EF9F27] border border-slate-100">
           <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">ครู</span><i class="ti ti-user-star text-[#BA7517] text-sm"></i></div>
           <p id="statTeachers" class="text-2xl font-medium text-[#633806]">-</p>
           <p class="text-[10px] text-slate-400 mt-0.5">ในระบบ</p>
         </div>
-        <div class="bg-white rounded-lg p-3 border-l-[3px] border-[#E24B4A] border border-slate-100">
+        <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#E24B4A] border border-slate-100">
           <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">ห้องเรียน</span><i class="ti ti-building text-[#E24B4A] text-sm"></i></div>
           <p id="statClasses" class="text-2xl font-medium text-[#791F1F]">-</p>
           <p class="text-[10px] text-slate-400 mt-0.5">ทั้งหมด</p>
@@ -132,17 +145,17 @@
 
       <!-- Quick actions -->
       <div class="grid grid-cols-3 gap-3 mb-5">
-        <a href="qr-scan.html" class="bg-white rounded-xl border border-slate-100 p-4 hover:border-[#185FA5] transition group">
+        <a href="qr-scan.html" class="quick-card bg-white rounded-xl border border-slate-100 p-4 hover:border-[#185FA5] transition group">
           <div class="w-10 h-10 rounded-lg bg-[#E6F1FB] text-[#185FA5] flex items-center justify-center mb-2 group-hover:bg-[#185FA5] group-hover:text-white transition"><i class="ti ti-qrcode text-xl"></i></div>
           <p class="text-sm font-medium text-slate-800">สแกน QR เช็คชื่อ</p>
           <p class="text-[11px] text-slate-500 mt-0.5">เปิดกล้องสแกนบัตรนักเรียน</p>
         </a>
-        <a href="checkin.html" class="bg-white rounded-xl border border-slate-100 p-4 hover:border-[#1D9E75] transition group">
+        <a href="checkin.html" class="quick-card bg-white rounded-xl border border-slate-100 p-4 hover:border-[#1D9E75] transition group">
           <div class="w-10 h-10 rounded-lg bg-[#E1F5EE] text-[#1D9E75] flex items-center justify-center mb-2 group-hover:bg-[#1D9E75] group-hover:text-white transition"><i class="ti ti-clipboard-check text-xl"></i></div>
           <p class="text-sm font-medium text-slate-800">เช็คชื่อ Homeroom</p>
           <p class="text-[11px] text-slate-500 mt-0.5">ติ๊กรายชื่อด้วยมือ</p>
         </a>
-        <a href="qr-cards.html" class="bg-white rounded-xl border border-slate-100 p-4 hover:border-[#EF9F27] transition group">
+        <a href="qr-cards.html" class="quick-card bg-white rounded-xl border border-slate-100 p-4 hover:border-[#EF9F27] transition group">
           <div class="w-10 h-10 rounded-lg bg-[#FAEEDA] text-[#BA7517] flex items-center justify-center mb-2 group-hover:bg-[#EF9F27] group-hover:text-white transition"><i class="ti ti-id-badge-2 text-xl"></i></div>
           <p class="text-sm font-medium text-slate-800">สร้างบัตร QR</p>
           <p class="text-[11px] text-slate-500 mt-0.5">พิมพ์บัตรแจกนักเรียน</p>
@@ -167,7 +180,7 @@
             <div class="flex items-center gap-2"><i class="ti ti-clock-hour-4 text-[#185FA5]"></i><h2 class="text-sm font-medium text-slate-700">เช็คชื่อล่าสุด</h2></div>
             <span id="lastUpdate" class="text-[10px] text-slate-400"></span>
           </div>
-          <div id="recentList" class="space-y-1.5"><div class="text-center text-xs text-slate-400 py-8">กำลังโหลด...</div></div>
+          <div id="recentList" class="space-y-1.5"><div class="text-center py-8"><span style="display:inline-block;width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#185FA5;border-radius:50%;animation:spin 0.7s linear infinite;"></span><p class="text-xs text-slate-400 mt-2">กำลังโหลดข้อมูล...</p></div></div>
         </div>
       </div>
 
@@ -204,23 +217,41 @@
     document.getElementById('todayDate').textContent =
       'วัน' + days[now.getDay()] + 'ที่ ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + (now.getFullYear()+543);
 
+    // ===== ตัวเลขนับขึ้นแบบเคลื่อนไหว =====
+    function animateCount(id, target) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      target = parseInt(target) || 0;
+      const duration = 900;
+      const start = performance.now();
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        // ease-out (ช้าลงตอนจบ ดูนุ่ม)
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(eased * target);
+        if (progress < 1) requestAnimationFrame(tick);
+        else el.textContent = target;
+      }
+      requestAnimationFrame(tick);
+    }
+
     async function loadStats() {
       try {
         const sRes = await fetch(API_URL + '?action=getStudents&page=1&size=1');
         const sData = await sRes.json();
-        if (sData.success) document.getElementById('statStudents').textContent = sData.total || 0;
+        if (sData.success) animateCount('statStudents', sData.total || 0);
 
         const tRes = await fetch(API_URL + '?action=getTeachers');
         const tData = await tRes.json();
-        if (tData.success) document.getElementById('statTeachers').textContent = (tData.data || []).length;
+        if (tData.success) animateCount('statTeachers', (tData.data || []).length);
 
         const cRes = await fetch(API_URL + '?action=getClasses');
         const cData = await cRes.json();
-        if (cData.success) document.getElementById('statClasses').textContent = (cData.data || []).length;
+        if (cData.success) animateCount('statClasses', (cData.data || []).length);
 
         const stRes = await fetch(API_URL + '?action=getTodayStats');
         const stData = await stRes.json();
-        if (stData.success) document.getElementById('statPresent').textContent = stData.data.present || 0;
+        if (stData.success) animateCount('statPresent', stData.data.present || 0);
 
       } catch (err) {}
     }
