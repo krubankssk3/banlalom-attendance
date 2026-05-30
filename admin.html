@@ -122,9 +122,9 @@
 
       <div class="grid grid-cols-4 gap-3 mb-5">
         <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#185FA5] border border-slate-100">
-          <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">นักเรียนทั้งหมด</span><i class="ti ti-users text-[#185FA5] text-sm"></i></div>
+          <div class="flex items-center justify-between mb-1"><span id="lblStudents" class="text-xs text-slate-500">นักเรียนทั้งหมด</span><i class="ti ti-users text-[#185FA5] text-sm"></i></div>
           <p id="statStudents" class="text-2xl font-medium text-slate-800">-</p>
-          <p class="text-[10px] text-slate-400 mt-0.5">รวมทั้งโรงเรียน</p>
+          <p id="subStudents" class="text-[10px] text-slate-400 mt-0.5">รวมทั้งโรงเรียน</p>
         </div>
         <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#1D9E75] border border-slate-100">
           <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">มาเรียนวันนี้</span><i class="ti ti-circle-check text-[#1D9E75] text-sm"></i></div>
@@ -132,14 +132,14 @@
           <p class="text-[10px] text-slate-400 mt-0.5">เช็คชื่อแล้ว</p>
         </div>
         <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#EF9F27] border border-slate-100">
-          <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">ครู</span><i class="ti ti-user-star text-[#BA7517] text-sm"></i></div>
+          <div class="flex items-center justify-between mb-1"><span id="lblCard3" class="text-xs text-slate-500">ครู</span><i id="icoCard3" class="ti ti-user-star text-[#BA7517] text-sm"></i></div>
           <p id="statTeachers" class="text-2xl font-medium text-[#633806]">-</p>
-          <p class="text-[10px] text-slate-400 mt-0.5">ในระบบ</p>
+          <p id="subCard3" class="text-[10px] text-slate-400 mt-0.5">ในระบบ</p>
         </div>
         <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#E24B4A] border border-slate-100">
-          <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">ห้องเรียน</span><i class="ti ti-building text-[#E24B4A] text-sm"></i></div>
+          <div class="flex items-center justify-between mb-1"><span id="lblCard4" class="text-xs text-slate-500">ห้องเรียน</span><i id="icoCard4" class="ti ti-building text-[#E24B4A] text-sm"></i></div>
           <p id="statClasses" class="text-2xl font-medium text-[#791F1F]">-</p>
-          <p class="text-[10px] text-slate-400 mt-0.5">ทั้งหมด</p>
+          <p id="subCard4" class="text-[10px] text-slate-400 mt-0.5">ทั้งหมด</p>
         </div>
       </div>
 
@@ -236,24 +236,53 @@
     }
 
     async function loadStats() {
-      try {
-        const sRes = await fetch(API_URL + '?action=getStudents&page=1&size=1');
-        const sData = await sRes.json();
-        if (sData.success) animateCount('statStudents', sData.total || 0);
+      const isAdmin = (user.role === 'Admin' || !user.role);
 
-        const tRes = await fetch(API_URL + '?action=getTeachers');
-        const tData = await tRes.json();
-        if (tData.success) animateCount('statTeachers', (tData.data || []).length);
+      if (isAdmin) {
+        // ===== แอดมิน: ภาพรวมทั้งโรงเรียน (4 การ์ดเดิม) =====
+        try {
+          const sRes = await fetch(API_URL + '?action=getStudents&page=1&size=1');
+          const sData = await sRes.json();
+          if (sData.success) animateCount('statStudents', sData.total || 0);
 
-        const cRes = await fetch(API_URL + '?action=getClasses');
-        const cData = await cRes.json();
-        if (cData.success) animateCount('statClasses', (cData.data || []).length);
+          const tRes = await fetch(API_URL + '?action=getTeachers');
+          const tData = await tRes.json();
+          if (tData.success) animateCount('statTeachers', (tData.data || []).length);
 
-        const stRes = await fetch(API_URL + '?action=getTodayStats');
-        const stData = await stRes.json();
-        if (stData.success) animateCount('statPresent', stData.data.present || 0);
+          const cRes = await fetch(API_URL + '?action=getClasses');
+          const cData = await cRes.json();
+          if (cData.success) animateCount('statClasses', (cData.data || []).length);
 
-      } catch (err) {}
+          const stRes = await fetch(API_URL + '?action=getTodayStats');
+          const stData = await stRes.json();
+          if (stData.success) animateCount('statPresent', stData.data.present || 0);
+        } catch (err) {}
+
+      } else {
+        // ===== ครู: เฉพาะห้องที่รับผิดชอบ (มา/สาย/ลา/ขาด วันนี้) =====
+        // เปลี่ยน label การ์ด
+        document.getElementById('lblStudents').textContent = 'นักเรียนห้องรับผิดชอบ';
+        document.getElementById('subStudents').textContent = 'รวมทุกห้อง';
+        document.getElementById('lblCard3').textContent = 'มาสายวันนี้';
+        document.getElementById('icoCard3').className = 'ti ti-clock-hour-4 text-[#BA7517] text-sm';
+        document.getElementById('subCard3').textContent = 'เฉพาะห้องรับผิดชอบ';
+        document.getElementById('lblCard4').textContent = 'ขาด/ลา วันนี้';
+        document.getElementById('icoCard4').className = 'ti ti-circle-x text-[#E24B4A] text-sm';
+        document.getElementById('subCard4').textContent = 'เฉพาะห้องรับผิดชอบ';
+        document.getElementById('subPresent') && (document.getElementById('subPresent').textContent = 'เฉพาะห้องรับผิดชอบ');
+
+        try {
+          const res = await fetch(API_URL + '?action=dashboardStats&teacherId=' + encodeURIComponent(user.id));
+          const data = await res.json();
+          if (data.success) {
+            const s = data.summary;
+            animateCount('statStudents', data.totalStudents || 0);
+            animateCount('statPresent', s.present || 0);
+            animateCount('statTeachers', s.late || 0);  // การ์ด 3 = สาย
+            animateCount('statClasses', (s.absent || 0) + (s.leave_personal || 0) + (s.leave_sick || 0)); // การ์ด 4 = ขาด+ลา
+          }
+        } catch (err) {}
+      }
     }
 
     // ===== โหลดกราฟ + เช็คชื่อล่าสุด =====
