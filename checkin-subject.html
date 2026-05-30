@@ -42,7 +42,7 @@
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-700 mb-1.5">คาบที่</label>
-            <select id="periodSelect" class="w-full h-10 px-2 text-sm border border-slate-200 rounded-lg focus:border-[#534AB7] outline-none">
+            <select id="periodSelect" onchange="checkPeriodTime()" class="w-full h-10 px-2 text-sm border border-slate-200 rounded-lg focus:border-[#534AB7] outline-none">
               <option value="1">คาบ 1</option>
               <option value="2">คาบ 2</option>
               <option value="3">คาบ 3</option>
@@ -57,6 +57,8 @@
           <i class="ti ti-info-circle text-[#534AB7] text-sm"></i>
           <span class="text-xs text-indigo-900" id="classHintText"></span>
         </div>
+
+        <div id="timeWarn" class="hidden mt-2 px-2.5 py-1.5 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-800"></div>
 
         <button onclick="loadStudents()" class="w-full mt-3 h-10 bg-[#534AB7] hover:bg-[#3C3489] text-white rounded-lg text-sm font-medium">
           <i class="ti ti-search"></i> โหลดรายชื่อ
@@ -178,8 +180,9 @@
             // มีตารางสอน -> แสดงเฉพาะคาบที่สอนจริง
             const DAYS = { '1':'จ.','2':'อ.','3':'พ.','4':'พฤ.','5':'ศ.' };
             sel.innerHTML = periods.map(p =>
-              `<option value="${p.period}">คาบ ${p.period} (${DAYS[String(p.dayOfWeek)] || ''}${p.startTime ? ' '+p.startTime : ''})</option>`
+              `<option value="${p.period}" data-start="${p.startTime||''}" data-end="${p.endTime||''}">คาบ ${p.period} (${DAYS[String(p.dayOfWeek)] || ''}${p.startTime ? ' '+p.startTime : ''})</option>`
             ).join('');
+            checkPeriodTime();
             return;
           }
         }
@@ -187,6 +190,33 @@
         setDefaultPeriods();
       } catch (err) {
         setDefaultPeriods();
+      }
+    }
+
+    // ===== เตือนถ้าเช็คนอกช่วงเวลาคาบ (ยืดหยุ่น - ยังเช็คได้) =====
+    function checkPeriodTime() {
+      const opt = document.getElementById('periodSelect').selectedOptions[0];
+      const warnBox = document.getElementById('timeWarn');
+      if (!opt || !warnBox) { if (warnBox) warnBox.classList.add('hidden'); return; }
+
+      const start = opt.getAttribute('data-start');
+      const end = opt.getAttribute('data-end');
+      // ไม่มีเวลากำหนด -> ไม่เตือน
+      if (!start || !end) { warnBox.classList.add('hidden'); return; }
+
+      // เทียบเวลาปัจจุบัน (HH:MM)
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      const [sh, sm] = start.split(':').map(Number);
+      const [eh, em] = end.split(':').map(Number);
+      const startMin = sh * 60 + sm;
+      const endMin = eh * 60 + em;
+
+      if (nowMin < startMin || nowMin > endMin) {
+        warnBox.innerHTML = '⚠ ขณะนี้อยู่นอกช่วงเวลาคาบนี้ (' + start + ' - ' + end + ') · ยังเช็คชื่อได้ แต่โปรดตรวจสอบ';
+        warnBox.classList.remove('hidden');
+      } else {
+        warnBox.classList.add('hidden');
       }
     }
 
