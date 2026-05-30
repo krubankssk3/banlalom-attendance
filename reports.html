@@ -11,6 +11,7 @@
   <style>
     body { font-family: 'Sarabun', sans-serif; }
     @media print { .no-print { display: none !important; } body { background: white; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -132,7 +133,7 @@
       if (!subjectId) { box.innerHTML = '<div class="text-center text-sm text-amber-600 py-6">เลือกวิชาก่อน</div>'; return; }
       if (!date) { box.innerHTML = '<div class="text-center text-sm text-amber-600 py-6">เลือกวันที่ก่อน</div>'; return; }
 
-      box.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>';
+      box.innerHTML = '<div class="text-center py-6"><span style="display:inline-block;width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#185FA5;border-radius:50%;animation:spin 0.7s linear infinite;"></span><p class="text-xs text-slate-400 mt-2">กำลังโหลดข้อมูล...</p></div>';
       try {
         const res = await fetch(API_URL + '?action=reportSubjectDay&subjectId=' + encodeURIComponent(subjectId) + '&date=' + date);
         const data = await res.json();
@@ -228,7 +229,7 @@
     async function loadDaily() {
       const date = document.getElementById('dailyDate').value || today;
       const el = document.getElementById('dailyResult');
-      el.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>';
+      el.innerHTML = '<div class="text-center py-6"><span style="display:inline-block;width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#185FA5;border-radius:50%;animation:spin 0.7s linear infinite;"></span><p class="text-xs text-slate-400 mt-2">กำลังโหลดข้อมูล...</p></div>';
       try {
         const res = await fetch(API_URL + '?action=reportDaily&date=' + date);
         const data = await res.json();
@@ -266,7 +267,7 @@
       const studentId = document.getElementById('studentSelect').value;
       if (!studentId) { alert('เลือกนักเรียน'); return; }
       const el = document.getElementById('studentResult');
-      el.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>';
+      el.innerHTML = '<div class="text-center py-6"><span style="display:inline-block;width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#185FA5;border-radius:50%;animation:spin 0.7s linear infinite;"></span><p class="text-xs text-slate-400 mt-2">กำลังโหลดข้อมูล...</p></div>';
       try {
         const res = await fetch(API_URL + '?action=reportStudent&studentId=' + encodeURIComponent(studentId));
         const data = await res.json();
@@ -300,7 +301,7 @@
       const month = document.getElementById('reportMonth').value;
       if (!classId) { alert('เลือกห้อง'); return; }
       const el = document.getElementById('classResult');
-      el.innerHTML = '<div class="text-center text-sm text-slate-400 py-6">กำลังโหลด...</div>';
+      el.innerHTML = '<div class="text-center py-6"><span style="display:inline-block;width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#185FA5;border-radius:50%;animation:spin 0.7s linear infinite;"></span><p class="text-xs text-slate-400 mt-2">กำลังโหลดข้อมูล...</p></div>';
       try {
         let url = API_URL + '?action=reportClass&classId=' + encodeURIComponent(classId);
         if (month) url += '&month=' + month;
