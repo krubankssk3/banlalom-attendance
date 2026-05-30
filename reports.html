@@ -148,6 +148,7 @@
         const thDays = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
         const thMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
         const dateStr = 'วัน' + thDays[d.getDay()] + 'ที่ ' + d.getDate() + ' ' + thMonths[d.getMonth()] + ' ' + (d.getFullYear()+543);
+        const shortDate = thDays[d.getDay()] + ' ' + d.getDate() + ' ' + thMonths[d.getMonth()];
 
         function nameList(list) {
           return list.map(s => `<div class="text-xs text-slate-600 pl-3">${s.number ? s.number+'. ' : ''}${s.name}</div>`).join('');
@@ -168,7 +169,7 @@
         html += data.periods.map(p => `
           <div class="mb-4 border border-slate-100 rounded-lg p-3">
             <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
-              <span class="text-xs font-medium bg-[#534AB7] text-white px-2.5 py-1 rounded">คาบ ${p.period}</span>
+              <span class="text-xs font-medium bg-[#534AB7] text-white px-2.5 py-1 rounded">คาบ ${p.period} · ${shortDate}</span>
               <span class="text-[11px] text-slate-500">
                 มา ${p.summary.present} · สาย ${p.summary.late} · ลา ${p.summary.leave} · ขาด ${p.summary.absent}
               </span>
@@ -186,20 +187,31 @@
       }
     }
 
-    // ----- โหลด dropdown -----
+    // ----- โหลด dropdown (กรองตามห้องที่ครูรับผิดชอบ) -----
     async function loadDropdowns() {
       try {
-        const cRes = await fetch(API_URL + '?action=getClasses');
+        const isAdmin = (user.role === 'Admin' || !user.role);
+
+        // ดึงห้องที่ครูรับผิดชอบ (homeroom + ห้องที่สอน) / แอดมินได้ทุกห้อง
+        const cRes = await fetch(API_URL + '?action=getMyClasses&teacherId=' + encodeURIComponent(user.id));
         const cData = await cRes.json();
+        let myClassIds = [];
         if (cData.success) {
-          const opts = cData.data.map(c => `<option value="${c.ClassID}">${c.ClassName || c.ClassID}</option>`).join('');
+          myClassIds = cData.data.map(c => String(c.classId).trim());
+          const opts = cData.data.map(c => `<option value="${c.classId}">${c.className}</option>`).join('');
           document.getElementById('classReportSelect').innerHTML = '<option value="">-- เลือกห้อง --</option>' + opts;
         }
+
+        // ดึงนักเรียน แล้วกรองเฉพาะห้องที่รับผิดชอบ
         const sRes = await fetch(API_URL + '?action=getStudentsManage');
         const sData = await sRes.json();
         if (sData.success) {
+          let studentList = sData.data;
+          if (!isAdmin) {
+            studentList = sData.data.filter(s => myClassIds.indexOf(String(s.classId).trim()) !== -1);
+          }
           document.getElementById('studentSelect').innerHTML = '<option value="">-- เลือกนักเรียน --</option>' +
-            sData.data.map(s => `<option value="${s.studentId}">${s.prefix}${s.firstName} ${s.lastName} (${s.classId})</option>`).join('');
+            studentList.map(s => `<option value="${s.studentId}">${s.prefix}${s.firstName} ${s.lastName} (${s.classId})</option>`).join('');
         }
       } catch (err) {}
     }
