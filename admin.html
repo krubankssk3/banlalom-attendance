@@ -154,7 +154,7 @@
         <!-- กราฟวงกลม -->
         <div class="bg-white rounded-xl border border-slate-100 p-5">
           <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2"><i class="ti ti-chart-pie text-[#185FA5]"></i><h2 class="text-sm font-medium text-slate-700">สรุปการมาเรียนวันนี้</h2></div>
+            <div class="flex items-center gap-2"><i class="ti ti-chart-pie text-[#185FA5]"></i><h2 id="pieTitle" class="text-sm font-medium text-slate-700">สรุปการมาเรียนวันนี้</h2></div>
             <button onclick="loadDashboard()" class="text-[11px] text-[#185FA5] flex items-center gap-1"><i class="ti ti-refresh"></i> รีเฟรช</button>
           </div>
           <div id="chartEmpty" class="hidden text-center text-xs text-slate-400 py-10"><i class="ti ti-chart-pie-off text-2xl block mb-2"></i>วันนี้ยังไม่มีการเช็คชื่อ</div>
@@ -229,7 +229,14 @@
     let dashPieChart = null, dashBarChart = null;
     async function loadDashboard() {
       try {
-        const res = await fetch(API_URL + '?action=dashboardStats');
+        // ครูเห็นเฉพาะห้องที่รับผิดชอบ / แอดมินเห็นทั้งโรงเรียน
+        const isAdmin = (user.role === 'Admin' || !user.role);
+        let url = API_URL + '?action=dashboardStats';
+        if (!isAdmin) url += '&teacherId=' + encodeURIComponent(user.id);
+        // ปรับหัวข้อตาม role
+        const pieTitle = document.getElementById('pieTitle');
+        if (pieTitle) pieTitle.textContent = isAdmin ? 'สรุปการมาเรียนวันนี้ (ทั้งโรงเรียน)' : 'สรุปการมาเรียนวันนี้ (ห้องที่รับผิดชอบ)';
+        const res = await fetch(url);
         const data = await res.json();
         if (!data.success) return;
 
