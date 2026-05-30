@@ -6,6 +6,7 @@
   <title>Dashboard - โรงเรียนบ้านละลม</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -148,9 +149,32 @@
         </a>
       </div>
 
-      <div class="bg-white rounded-xl border border-slate-100 p-5">
-        <div class="flex items-center gap-2 mb-3"><i class="ti ti-circle-check text-[#1D9E75]"></i><h2 class="text-sm font-medium text-slate-700">สถานะระบบ</h2></div>
-        <div id="systemStatus" class="text-xs text-slate-500">กำลังตรวจสอบ...</div>
+      <!-- กราฟสรุป + เช็คชื่อล่าสุด -->
+      <div class="grid md:grid-cols-2 gap-4">
+        <!-- กราฟวงกลม -->
+        <div class="bg-white rounded-xl border border-slate-100 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2"><i class="ti ti-chart-pie text-[#185FA5]"></i><h2 class="text-sm font-medium text-slate-700">สรุปการมาเรียนวันนี้</h2></div>
+            <button onclick="loadDashboard()" class="text-[11px] text-[#185FA5] flex items-center gap-1"><i class="ti ti-refresh"></i> รีเฟรช</button>
+          </div>
+          <div id="chartEmpty" class="hidden text-center text-xs text-slate-400 py-10"><i class="ti ti-chart-pie-off text-2xl block mb-2"></i>วันนี้ยังไม่มีการเช็คชื่อ</div>
+          <div id="chartWrap" style="height: 220px;"><canvas id="dashPie"></canvas></div>
+        </div>
+
+        <!-- เช็คชื่อล่าสุด -->
+        <div class="bg-white rounded-xl border border-slate-100 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2"><i class="ti ti-clock-hour-4 text-[#185FA5]"></i><h2 class="text-sm font-medium text-slate-700">เช็คชื่อล่าสุด</h2></div>
+            <span id="lastUpdate" class="text-[10px] text-slate-400"></span>
+          </div>
+          <div id="recentList" class="space-y-1.5"><div class="text-center text-xs text-slate-400 py-8">กำลังโหลด...</div></div>
+        </div>
+      </div>
+
+      <!-- กราฟแท่งรายห้อง -->
+      <div id="barWrap" class="bg-white rounded-xl border border-slate-100 p-5 mt-4 hidden">
+        <div class="flex items-center gap-2 mb-3"><i class="ti ti-chart-bar text-[#185FA5]"></i><h2 class="text-sm font-medium text-slate-700">การมาเรียนรายห้องวันนี้</h2></div>
+        <div style="height: 220px;"><canvas id="dashBar"></canvas></div>
       </div>
 
 
@@ -198,12 +222,83 @@
         const stData = await stRes.json();
         if (stData.success) document.getElementById('statPresent').textContent = stData.data.present || 0;
 
-        document.getElementById('systemStatus').innerHTML =
-          '<div class="flex items-center gap-2 text-[#1D9E75]"><i class="ti ti-circle-check-filled"></i> เชื่อมต่อฐานข้อมูลสำเร็จ ดึงข้อมูลได้ปกติ</div>';
-      } catch (err) {
-        document.getElementById('systemStatus').innerHTML =
-          '<div class="flex items-center gap-2 text-red-500"><i class="ti ti-alert-circle"></i> ดึงข้อมูลไม่สำเร็จ: ' + err.message + '</div>';
-      }
+      } catch (err) {}
+    }
+
+    // ===== โหลดกราฟ + เช็คชื่อล่าสุด =====
+    let dashPieChart = null, dashBarChart = null;
+    async function loadDashboard() {
+      try {
+        const res = await fetch(API_URL + '?action=dashboardStats');
+        const data = await res.json();
+        if (!data.success) return;
+
+        document.getElementById('lastUpdate').textContent = 'อัปเดต ' + data.updatedAt;
+
+        // กราฟวงกลม
+        const s = data.summary;
+        const totalPie = s.present + s.late + s.leave_personal + s.leave_sick + s.absent;
+        if (totalPie === 0) {
+          document.getElementById('chartEmpty').classList.remove('hidden');
+          document.getElementById('chartWrap').classList.add('hidden');
+        } else {
+          document.getElementById('chartEmpty').classList.add('hidden');
+          document.getElementById('chartWrap').classList.remove('hidden');
+          if (dashPieChart) dashPieChart.destroy();
+          dashPieChart = new Chart(document.getElementById('dashPie'), {
+            type: 'doughnut',
+            data: {
+              labels: ['มา','สาย','ลากิจ','ลาป่วย','ขาด'],
+              datasets: [{ data: [s.present, s.late, s.leave_personal, s.leave_sick, s.absent],
+                backgroundColor: ['#1D9E75','#EF9F27','#534AB7','#185FA5','#E24B4A'] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 11 } } } } }
+          });
+        }
+
+        // กราฟแท่งรายห้อง
+        if (data.byClass.length) {
+          document.getElementById('barWrap').classList.remove('hidden');
+          if (dashBarChart) dashBarChart.destroy();
+          dashBarChart = new Chart(document.getElementById('dashBar'), {
+            type: 'bar',
+            data: {
+              labels: data.byClass.map(c => c.className),
+              datasets: [
+                { label: 'มา', data: data.byClass.map(c => c.present), backgroundColor: '#1D9E75' },
+                { label: 'สาย', data: data.byClass.map(c => c.late), backgroundColor: '#EF9F27' },
+                { label: 'ขาด', data: data.byClass.map(c => c.absent), backgroundColor: '#E24B4A' }
+              ]
+            },
+            options: { responsive: true, maintainAspectRatio: false,
+              scales: { x: { stacked: true, ticks: { font: { family: 'Sarabun', size: 10 } } }, y: { stacked: true, ticks: { font: { size: 10 } } } },
+              plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 11 } } } } }
+          });
+        } else {
+          document.getElementById('barWrap').classList.add('hidden');
+        }
+
+        // เช็คชื่อล่าสุด
+        const recentBox = document.getElementById('recentList');
+        if (!data.recent.length) {
+          recentBox.innerHTML = '<div class="text-center text-xs text-slate-400 py-8"><i class="ti ti-inbox text-2xl block mb-2"></i>ยังไม่มีการเช็คชื่อวันนี้</div>';
+        } else {
+          const stColor = { present: 'text-[#1D9E75]', late: 'text-[#BA7517]', absent: 'text-[#E24B4A]', leave_personal: 'text-[#534AB7]', leave_sick: 'text-[#185FA5]' };
+          recentBox.innerHTML = data.recent.map(r => `
+            <div class="flex items-center justify-between py-1.5 border-b border-slate-50 text-xs">
+              <div class="flex-1 min-w-0">
+                <span class="font-medium text-slate-700">${r.name}</span>
+                <span class="text-[10px] text-slate-400"> · ${r.classId} · ${r.period}</span>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <span class="${stColor[r.status] || 'text-slate-500'} text-[11px]">${r.statusLabel}</span>
+                ${r.method ? `<span class="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">${r.method}</span>` : ''}
+                <span class="text-[10px] text-slate-400">${r.time}</span>
+              </div>
+            </div>`).join('');
+        }
+      } catch (err) {}
     }
 
     function logout() {
@@ -248,6 +343,7 @@
 
     applyRoleMenu();
     loadStats();
+    loadDashboard();
   </script>
 
 </body>
