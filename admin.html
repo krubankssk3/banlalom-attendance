@@ -121,22 +121,22 @@
       </div>
 
       <div class="grid grid-cols-4 gap-3 mb-5">
-        <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#185FA5] border border-slate-100">
+        <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#185FA5] border border-slate-100" style="animation-delay:0.05s">
           <div class="flex items-center justify-between mb-1"><span id="lblStudents" class="text-xs text-slate-500">นักเรียนทั้งหมด</span><i class="ti ti-users text-[#185FA5] text-sm"></i></div>
           <p id="statStudents" class="text-2xl font-medium text-slate-800">-</p>
           <p id="subStudents" class="text-[10px] text-slate-400 mt-0.5">รวมทั้งโรงเรียน</p>
         </div>
-        <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#1D9E75] border border-slate-100">
+        <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#1D9E75] border border-slate-100" style="animation-delay:0.12s">
           <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">มาเรียนวันนี้</span><i class="ti ti-circle-check text-[#1D9E75] text-sm"></i></div>
           <p id="statPresent" class="text-2xl font-medium text-[#085041]">-</p>
           <p class="text-[10px] text-slate-400 mt-0.5">เช็คชื่อแล้ว</p>
         </div>
-        <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#EF9F27] border border-slate-100">
+        <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#EF9F27] border border-slate-100" style="animation-delay:0.19s">
           <div class="flex items-center justify-between mb-1"><span id="lblCard3" class="text-xs text-slate-500">ครู</span><i id="icoCard3" class="ti ti-user-star text-[#BA7517] text-sm"></i></div>
           <p id="statTeachers" class="text-2xl font-medium text-[#633806]">-</p>
           <p id="subCard3" class="text-[10px] text-slate-400 mt-0.5">ในระบบ</p>
         </div>
-        <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#E24B4A] border border-slate-100">
+        <div class="stat-card fade-up bg-white rounded-lg p-3 border-l-[3px] border-[#E24B4A] border border-slate-100" style="animation-delay:0.26s">
           <div class="flex items-center justify-between mb-1"><span id="lblCard4" class="text-xs text-slate-500">ห้องเรียน</span><i id="icoCard4" class="ti ti-building text-[#E24B4A] text-sm"></i></div>
           <p id="statClasses" class="text-2xl font-medium text-[#791F1F]">-</p>
           <p id="subCard4" class="text-[10px] text-slate-400 mt-0.5">ทั้งหมด</p>
@@ -145,17 +145,17 @@
 
       <!-- Quick actions -->
       <div class="grid grid-cols-3 gap-3 mb-5">
-        <a href="qr-scan.html" class="quick-card bg-white rounded-xl border border-slate-100 p-4 hover:border-[#185FA5] transition group">
+        <a href="qr-scan.html" class="quick-card fade-up bg-white rounded-xl border border-slate-100 p-4 hover:border-[#185FA5] transition group" style="animation-delay:0.30s">
           <div class="w-10 h-10 rounded-lg bg-[#E6F1FB] text-[#185FA5] flex items-center justify-center mb-2 group-hover:bg-[#185FA5] group-hover:text-white transition"><i class="ti ti-qrcode text-xl"></i></div>
           <p class="text-sm font-medium text-slate-800">สแกน QR เช็คชื่อ</p>
           <p class="text-[11px] text-slate-500 mt-0.5">เปิดกล้องสแกนบัตรนักเรียน</p>
         </a>
-        <a href="checkin.html" class="quick-card bg-white rounded-xl border border-slate-100 p-4 hover:border-[#1D9E75] transition group">
+        <a href="checkin.html" class="quick-card fade-up bg-white rounded-xl border border-slate-100 p-4 hover:border-[#1D9E75] transition group" style="animation-delay:0.33s">
           <div class="w-10 h-10 rounded-lg bg-[#E1F5EE] text-[#1D9E75] flex items-center justify-center mb-2 group-hover:bg-[#1D9E75] group-hover:text-white transition"><i class="ti ti-clipboard-check text-xl"></i></div>
           <p class="text-sm font-medium text-slate-800">เช็คชื่อ Homeroom</p>
           <p class="text-[11px] text-slate-500 mt-0.5">ติ๊กรายชื่อด้วยมือ</p>
         </a>
-        <a href="qr-cards.html" class="quick-card bg-white rounded-xl border border-slate-100 p-4 hover:border-[#EF9F27] transition group">
+        <a href="qr-cards.html" class="quick-card fade-up bg-white rounded-xl border border-slate-100 p-4 hover:border-[#EF9F27] transition group" style="animation-delay:0.36s">
           <div class="w-10 h-10 rounded-lg bg-[#FAEEDA] text-[#BA7517] flex items-center justify-center mb-2 group-hover:bg-[#EF9F27] group-hover:text-white transition"><i class="ti ti-id-badge-2 text-xl"></i></div>
           <p class="text-sm font-medium text-slate-800">สร้างบัตร QR</p>
           <p class="text-[11px] text-slate-500 mt-0.5">พิมพ์บัตรแจกนักเรียน</p>
@@ -163,7 +163,7 @@
       </div>
 
       <!-- กราฟสรุป + เช็คชื่อล่าสุด -->
-      <div class="grid md:grid-cols-2 gap-4">
+      <div class="fade-up grid md:grid-cols-2 gap-4" style="animation-delay:0.36s">
         <!-- กราฟวงกลม -->
         <div class="bg-white rounded-xl border border-slate-100 p-5">
           <div class="flex items-center justify-between mb-3">
@@ -185,7 +185,7 @@
       </div>
 
       <!-- กราฟแท่งรายห้อง -->
-      <div id="barWrap" class="bg-white rounded-xl border border-slate-100 p-5 mt-4 hidden">
+      <div id="barWrap" class="fade-up bg-white rounded-xl border border-slate-100 p-5 mt-4 hidden" style="animation-delay:0.48s">
         <div class="flex items-center gap-2 mb-3"><i class="ti ti-chart-bar text-[#185FA5]"></i><h2 class="text-sm font-medium text-slate-700">การมาเรียนรายห้องวันนี้</h2></div>
         <div style="height: 220px;"><canvas id="dashBar"></canvas></div>
       </div>
