@@ -30,7 +30,7 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-[10px] text-slate-500 mb-1">ห้อง</label>
-            <select id="classSelect" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none">
+            <select id="classSelect" onchange="loadPeriods()" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none">
               <option value="">-- เลือกห้อง --</option>
             </select>
           </div>
@@ -38,9 +38,6 @@
             <label class="block text-[10px] text-slate-500 mb-1">คาบ</label>
             <select id="periodSelect" class="w-full h-9 px-2 text-xs border border-slate-200 rounded outline-none">
               <option value="homeroom">Homeroom</option>
-              <option value="1">คาบ 1</option><option value="2">คาบ 2</option>
-              <option value="3">คาบ 3</option><option value="4">คาบ 4</option>
-              <option value="5">คาบ 5</option><option value="6">คาบ 6</option>
             </select>
           </div>
         </div>
@@ -195,6 +192,29 @@
         const data = await res.json();
         alert(data.success ? '✓ ' + data.message : 'ส่งไม่สำเร็จ: ' + (data.error || ''));
       } catch (err) { alert('เชื่อมต่อระบบไม่ได้'); }
+    }
+
+    // ===== ดึงคาบที่สอนในห้องนี้ (จากตารางสอน) =====
+    async function loadPeriods() {
+      const classId = document.getElementById('classSelect').value;
+      const sel = document.getElementById('periodSelect');
+      sel.innerHTML = '<option value="homeroom">Homeroom</option>';
+      if (!classId) return;
+      try {
+        // ดึงตารางสอนของครู (แอดมินดึงทั้งหมด)
+        let url = API_URL + '?action=getSchedule';
+        if (user.role !== 'Admin' && user.role) url += '&teacherId=' + encodeURIComponent(user.id);
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.success) {
+          // เฉพาะคาบของห้องนี้
+          const periods = data.data.filter(s => String(s.classId).trim() === String(classId).trim());
+          const DAYS = { '1':'จ.','2':'อ.','3':'พ.','4':'พฤ.','5':'ศ.' };
+          periods.forEach(p => {
+            sel.innerHTML += `<option value="${p.period}">คาบ ${p.period} · ${p.subjectName} (${DAYS[String(p.dayOfWeek)]||''})</option>`;
+          });
+        }
+      } catch (err) {}
     }
 
     loadClasses();
