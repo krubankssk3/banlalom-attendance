@@ -50,8 +50,11 @@
         </div>
         <canvas id="canvas" class="hidden"></canvas>
 
-        <button id="scanBtn" onclick="scanFace()" class="w-full h-12 bg-[#534AB7] hover:bg-[#3C3489] text-white rounded-lg text-base font-medium">
-          <i class="ti ti-camera"></i> ถ่ายเช็คชื่อ
+        <button id="autoBtn" onclick="toggleAuto()" class="w-full h-12 bg-[#1D9E75] hover:bg-[#0F6E56] text-white rounded-lg text-base font-medium mb-2">
+          <i class="ti ti-scan"></i> <span id="autoText">เริ่มสแกนอัตโนมัติ</span>
+        </button>
+        <button id="scanBtn" onclick="scanFace()" class="w-full h-11 bg-[#534AB7] hover:bg-[#3C3489] text-white rounded-lg text-sm font-medium">
+          <i class="ti ti-camera"></i> ถ่ายเช็คชื่อ (กดเอง)
         </button>
 
         <!-- ผลลัพธ์ -->
@@ -100,10 +103,15 @@
       }
     }
 
-    async function scanFace() {
+    let isScanning = false;  // กันยิงซ้อน
+    let lastCheckedId = null; // กันจับคนเดิมซ้ำติดๆ
+
+    async function scanFace(auto) {
       const classId = document.getElementById('classSelect').value;
       const period = document.getElementById('periodSelect').value;
-      if (!classId) { alert('เลือกห้องก่อน'); return; }
+      if (!classId) { if (!auto) alert('เลือกห้องก่อน'); return; }
+      if (isScanning) return;  // กำลังตรวจอยู่ ข้าม
+      isScanning = true;
 
       const video = document.getElementById('video');
       const canvas = document.getElementById('canvas');
@@ -118,9 +126,11 @@
 
       const btn = document.getElementById('scanBtn');
       const result = document.getElementById('result');
-      btn.disabled = true; btn.innerHTML = 'กำลังตรวจ...';
-      result.classList.remove('hidden');
-      result.innerHTML = '<div class="p-3 bg-slate-50 rounded-lg text-center text-xs text-slate-500">กำลังตรวจใบหน้า...</div>';
+      if (!auto) {
+        btn.disabled = true; btn.innerHTML = 'กำลังตรวจ...';
+        result.classList.remove('hidden');
+        result.innerHTML = '<div class="p-3 bg-slate-50 rounded-lg text-center text-xs text-slate-500">กำลังตรวจใบหน้า...</div>';
+      }
 
       try {
         const res = await fetch(API_URL, {
@@ -130,6 +140,13 @@
         const data = await res.json();
         if (data.success) {
           const s = data.student;
+          // โหมด auto: ถ้าจับคนเดิมที่เพิ่งเช็ค ให้เงียบ (ไม่บี๊บ/ไม่ขึ้นซ้ำ)
+          if (auto && s.studentId === lastCheckedId) {
+            isScanning = false;
+            return;
+          }
+          lastCheckedId = s.studentId;
+          result.classList.remove('hidden');
           result.innerHTML = `
             <div class="p-3 bg-green-50 border border-green-200 rounded-lg text-center">
               <i class="ti ti-circle-check-filled text-2xl text-[#1D9E75]"></i>
@@ -147,6 +164,8 @@
           // เสียงบี๊บ
           beep();
         } else {
+          // โหมด auto: ไม่เจอหน้า/ไม่ชัด ให้เงียบ (ไม่รบกวน รอเฟรมถัดไป)
+          if (auto) { isScanning = false; return; }
           result.innerHTML = `
             <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-center">
               <i class="ti ti-alert-circle text-2xl text-[#E24B4A]"></i>
@@ -154,10 +173,32 @@
             </div>`;
         }
       } catch (err) {
-        result.innerHTML = '<div class="p-3 bg-red-50 rounded-lg text-center text-xs text-red-700">เชื่อมต่อระบบไม่ได้</div>';
+        if (!auto) result.innerHTML = '<div class="p-3 bg-red-50 rounded-lg text-center text-xs text-red-700">เชื่อมต่อระบบไม่ได้</div>';
       }
-      btn.disabled = false; btn.innerHTML = '<i class="ti ti-camera"></i> ถ่ายเช็คชื่อ';
+      if (!auto) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-camera"></i> ถ่ายเช็คชื่อ (กดเอง)'; }
+      isScanning = false;
     }
+
+    // ===== โหมดสแกนอัตโนมัติ (ทุก 3 วินาที) =====
+    let autoTimer = null;
+    function toggleAuto() {
+      const classId = document.getElementById('classSelect').value;
+      if (!classId) { alert('เลือกห้องก่อน'); return; }
+      if (autoTimer) {
+        // ปิด
+        clearInterval(autoTimer); autoTimer = null;
+        document.getElementById('autoText').textContent = 'เริ่มสแกนอัตโนมัติ';
+        document.getElementById('autoBtn').className = 'w-full h-12 bg-[#1D9E75] hover:bg-[#0F6E56] text-white rounded-lg text-base font-medium mb-2';
+      } else {
+        // เปิด - สแกนทุก 3 วินาที
+        autoTimer = setInterval(() => scanFace(true), 3000);
+        document.getElementById('autoText').textContent = '⏸ หยุดสแกนอัตโนมัติ';
+        document.getElementById('autoBtn').className = 'w-full h-12 bg-[#E24B4A] hover:bg-[#C13838] text-white rounded-lg text-base font-medium mb-2';
+        scanFace(true); // เริ่มทันที
+      }
+    }
+    // ปิด timer เมื่อออกจากหน้า
+    window.addEventListener('beforeunload', () => { if (autoTimer) clearInterval(autoTimer); });
 
     function renderChecked() {
       document.getElementById('checkedCount').textContent = checkedToday.length;
