@@ -18,6 +18,7 @@
       .qr-card { break-inside: avoid; border: 1px dashed #ccc !important; }
     }
     .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -88,7 +89,7 @@
       if (!classId) { alert('กรุณาเลือกห้อง'); return; }
 
       const grid = document.getElementById('cardGrid');
-      grid.innerHTML = '<div class="no-print col-span-3 text-center text-sm text-slate-400 py-10"><i class="ti ti-loader animate-spin text-2xl block mb-2"></i>กำลังโหลด...</div>';
+      grid.innerHTML = `<div class="no-print col-span-3 text-center py-10"><span style="display:inline-block;width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#185FA5;border-radius:50%;animation:spin 0.7s linear infinite;"></span><p class="text-xs text-slate-400 mt-2">กำลังโหลดข้อมูล...</p></div>`;
 
       try {
         const res = await fetch(API_URL + '?action=getStudentsByClass&classId=' + encodeURIComponent(classId));
