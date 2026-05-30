@@ -11,6 +11,7 @@
   <style>
     body { font-family: 'Sarabun', sans-serif; }
     .status-btn { transition: all 0.1s; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -152,7 +153,7 @@
       if (!classId) { alert('กรุณาเลือกห้องเรียน'); return; }
 
       const list = document.getElementById('studentList');
-      list.innerHTML = '<div class="text-center text-sm text-slate-400 py-8"><i class="ti ti-loader animate-spin text-2xl block mb-2"></i> กำลังโหลด...</div>';
+      list.innerHTML = `<div class="text-center py-8"><span style="display:inline-block;width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#185FA5;border-radius:50%;animation:spin 0.7s linear infinite;"></span><p class="text-xs text-slate-400 mt-2">กำลังโหลดข้อมูล...</p></div>`;
 
       try {
         // ดึงรายชื่อ + การเช็คชื่อที่บันทึกไว้ พร้อมกัน
@@ -314,5 +315,11 @@
     loadClasses();
   </script>
 
+
+  <!-- Footer เครดิตผู้พัฒนา -->
+  <footer class="py-5 text-center">
+    <p class="text-[11px] text-slate-400">ผู้พัฒนา: นายชิติพัทธ์ นิลวรรณ · ตำแหน่ง ครู</p>
+    <p class="text-[11px] text-slate-400">โรงเรียนบ้านละลม สพป.ศรีสะเกษ เขต 3</p>
+  </footer>
 </body>
 </html>
